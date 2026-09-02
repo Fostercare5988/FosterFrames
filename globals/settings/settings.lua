@@ -36,6 +36,11 @@ if FOSTERFRAMESPLAYERDATA == nil then
         ['spyStealthAlert']              = true,
         ['spyAnnounceNearby']            = false,
         -- Battlegrounds
+        ['avMode']                       = true,
+        ['avShowOnlyNearby']             = false,
+        ['avUnitWidth']                  = 112,
+        ['avUnitHeight']                 = 16,
+        ['avShowMana']                   = false,
         ['smartDistanceSorting']         = false,
         ['efcBGannouncement']            = true,
         ['efcDistanceTracking']          = true,
@@ -149,6 +154,18 @@ local TABS_CONFIG = {
         name = 'Automation',
         title = 'Automation & Battlegrounds',
         checkboxes = {
+            {
+                id = 'avMode',
+                label = 'Enable AV Compact Mode (BattlegroundTargets style)',
+                tooltipTitle = 'AV BattlegroundTargets Mode',
+                tooltipText = 'In Alterac Valley (40 enemies), automatically switches to an ultra-compact 4x10 grid with 16px slim bars (BattlegroundTargets style) to keep your screen completely clear and unobstructed.'
+            },
+            {
+                id = 'avShowOnlyNearby',
+                label = 'AV: Show Only Nearby / Active Enemies',
+                tooltipTitle = 'AV Active Enemy Filter',
+                tooltipText = 'In Alterac Valley, automatically hides far-away hostiles, showing only enemies that are nearby or engaged in active combat around you.'
+            },
             {
                 id = 'smartDistanceSorting',
                 label = 'Sort Frames by Distance (Closest first)',

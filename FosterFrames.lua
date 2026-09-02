@@ -112,15 +112,20 @@ local xGap = 6
 local yGap = 4
 
 function FOSTERFRAMES_UpdateDimensions(newWidth, newHeight)
-    local width = newWidth or (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['unitWidth']) or unitWidth or 126
-    local height = newHeight or (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['unitHeight']) or unitHeight or 24
+    local currentZoneName = GetZoneText()
+    local isAV = (currentZoneName == 'Alterac Valley') or (FOSTERFRAMES_TESTMODE and testUnitCount == 40)
+    local isAVMode = isAV and (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avMode'] ~= false)
+
+    local width = newWidth or (isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avUnitWidth']) or (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['unitWidth']) or (isAVMode and 112 or 126)
+    local height = newHeight or (isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avUnitHeight']) or (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['unitHeight']) or (isAVMode and 16 or 24)
 
     unitWidth = width
     unitHeight = height
 
-    local iSize = math.max(16, height - 1)
-    local hpW = math.max(30, width - iSize - 3)
-    local manaH = math.max(3, math.floor(height * 0.22))
+    local iSize = math.max(14, height - 1)
+    local hpW = math.max(30, width - iSize - 2)
+    local showMana = (not isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManabar']) or (isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avShowMana'])
+    local manaH = showMana and math.max(3, math.floor(height * 0.22)) or 0
     local hpH = math.max(8, height - manaH - 1)
 
     for i = 1, unitLimit do
@@ -129,23 +134,29 @@ function FOSTERFRAMES_UpdateDimensions(newWidth, newHeight)
             btn:SetWidth(width)
             btn:SetHeight(height)
 
-            local showMana = (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManabar'])
             btn.hpbar:SetWidth(hpW)
             btn.hpbar:SetHeight(showMana and hpH or (height - 1))
 
             btn.manabar:SetWidth(hpW)
-            btn.manabar:SetHeight(manaH)
+            if showMana and manaH > 0 then
+                btn.manabar:SetHeight(manaH)
+                btn.manabar:Show()
+            else
+                btn.manabar:Hide()
+            end
 
             btn.cc:SetWidth(iSize)
             btn.cc:SetHeight(iSize)
-            btn.cc:SetPoint('TOPLEFT', btn, 'TOPLEFT', hpW + 3, 0)
+            btn.cc:SetPoint('TOPLEFT', btn, 'TOPLEFT', hpW + 2, 0)
 
             btn.ffCastbar:SetWidth(width - 4)
+            btn.ffCastbar:SetHeight(math.min(8, height - 4))
         end
     end
 
     if arrangeUnits then arrangeUnits() end
 end
+
 
 -- Create Unit Frames
 for i = 1, unitLimit do
@@ -336,21 +347,35 @@ local function arrangeUnits()
     local activeUnits = FOSTERFRAMES_TESTMODE and testUnitCount or maxUnits
     if activeUnits < 1 then activeUnits = 1 end
 
+    local currentZoneName = GetZoneText()
+    local isAV = (currentZoneName == 'Alterac Valley') or (FOSTERFRAMES_TESTMODE and testUnitCount == 40)
+    local isAVMode = isAV and (FOSTERFRAMESPLAYERDATA['avMode'] ~= false)
+
+    local width = unitWidth or 126
+    local height = unitHeight or 24
+    local currentXGap = isAVMode and 4 or xGap
+    local currentYGap = isAVMode and 2 or yGap
+
+    local unitsPerCol = 5
+    if isAVMode then
+        unitsPerCol = (layout == 'block') and 10 or (layout == 'hblock' and 8) or 10
+    end
+
     local numCols = 1
     if layout == 'horizontal' then
         numCols = activeUnits
     elseif layout == 'hblock' then
-        numCols = math.min(5, activeUnits)
+        numCols = math.min(isAVMode and 5 or 5, activeUnits)
     elseif layout == 'vblock' then
         numCols = 2
     elseif layout == 'vertical' then
         numCols = 1
-    else -- 'block' default: 5 units per column
-        numCols = math.ceil(activeUnits / 5)
+    else -- 'block'
+        numCols = math.ceil(activeUnits / unitsPerCol)
     end
     if numCols < 1 then numCols = 1 end
 
-    fosterFrameDisplay:SetWidth(numCols * unitWidth + (numCols - 1) * xGap)
+    fosterFrameDisplay:SetWidth(numCols * width + (numCols - 1) * currentXGap)
 
     if playerFaction == 'Alliance' then
         fosterFrameDisplay.Title:SetText(layout == 'vertical' and 'H ' or 'Horde')
@@ -366,8 +391,8 @@ local function arrangeUnits()
             col = i - 1
             row = 0
         elseif layout == 'hblock' then
-            col = (i - 1) % 5
-            row = math.floor((i - 1) / 5)
+            col = (i - 1) % (isAVMode and 5 or 5)
+            row = math.floor((i - 1) / (isAVMode and 5 or 5))
         elseif layout == 'vblock' then
             col = (i - 1) % 2
             row = math.floor((i - 1) / 2)
@@ -375,12 +400,12 @@ local function arrangeUnits()
             col = 0
             row = i - 1
         else -- 'block'
-            col = math.floor((i - 1) / 5)
-            row = (i - 1) % 5
+            col = math.floor((i - 1) / unitsPerCol)
+            row = (i - 1) % unitsPerCol
         end
 
-        local xOfs = col * (unitWidth + xGap)
-        local yOfs = -4 - row * (unitHeight + yGap)
+        local xOfs = col * (width + currentXGap)
+        local yOfs = -4 - row * (height + currentYGap)
         units[i]:SetPoint('TOPLEFT', fosterFrameDisplay, 'BOTTOMLEFT', xOfs, yOfs)
     end
 end
@@ -432,6 +457,11 @@ local function drawUnits(list)
     fosterFrame.uiList = list or {}
     local i = 1
 
+    local currentZoneName = GetZoneText()
+    local isAV = (currentZoneName == 'Alterac Valley')
+    local isAVMode = isAV and (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avMode'] ~= false)
+    local hideFarInAV = isAV and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avShowOnlyNearby']
+
     for _, v in pairs(fosterFrame.uiList) do
         if i > unitLimit then break end
 
@@ -447,35 +477,29 @@ local function drawUnits(list)
             units[i].manabar:SetStatusBarColor(powerColor[1], powerColor[2], powerColor[3])
             units[i].cc.icon:SetVertexColor(1, 1, 1, 1)
         else
+            units[i].hpbar:SetStatusBarColor(colour.r * 0.35, colour.g * 0.35, colour.b * 0.35)
             units[i].hoverEnabled = false
-            units[i].hpbar:SetStatusBarColor(colour.r / 2, colour.g / 2, colour.b / 2, 0.7)
-            units[i].manabar:SetStatusBarColor(powerColor[1] / 2, powerColor[2] / 2, powerColor[3] / 2)
-            if not units[i].mo then units[i].name:SetTextColor(colour.r / 2, colour.g / 2, colour.b / 2, 0.7) end
-            if v.fc then
-                units[i].cc.icon:SetVertexColor(1, 1, 1, 1)
-            else
-                units[i].cc.icon:SetVertexColor(0.4, 0.4, 0.4, 0.7)
-            end
-            units[i].cc.cd:Hide()
+            units[i].name:SetTextColor(colour.r * 0.45, colour.g * 0.45, colour.b * 0.45)
+            units[i].manabar:SetStatusBarColor(powerColor[1] * 0.35, powerColor[2] * 0.35, powerColor[3] * 0.35)
+            units[i].cc.icon:SetVertexColor(0.4, 0.4, 0.4, 1)
         end
 
-        local displayName = (v.name or 'Unknown'):sub(1, 6)
-        units[i].name:SetText(displayName)
+        local spec = FOSTERFRAMESGetUnitSpec(v.name)
+        if spec and spec.icon and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['specSpecificIcons'] then
+            units[i].cc.icon:SetTexture(spec.icon)
+        else
+            units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', class))
+        end
+
+        units[i].tar = v.name
+        units[i].guid = v.guid
+        units[i].name:SetText(v.name:sub(1, isAVMode and 6 or 7))
+
         if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayNames'] == false then
             units[i].name:Hide()
         else
             units[i].name:Show()
         end
-
-        units[i].tar = v.name
-        units[i].guid = v.guid
-
-        -- CC / Spec icon
-        local icon = v.fc and SPELLINFO_WSG_FLAGS[playerFaction]['icon'] or GET_DEFAULT_ICON('class', v.class)
-        if not v.fc and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['specSpecificIcons'] and v.spec then
-            icon = GET_DEFAULT_ICON('spec', v.spec)
-        end
-        units[i].cc.icon:SetTexture(icon)
 
         -- Target count
         units[i].targetCount.text:SetText(v.targetcount and (v.targetcount > 0 and v.targetcount or '') or '')
@@ -501,7 +525,8 @@ local function drawUnits(list)
         units[i].manabar:SetMinMaxValues(0, maxMana)
         units[i].manabar:SetValue(currMana)
 
-        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManaValues'] and v.class ~= 'WARRIOR' and v.class ~= 'ROGUE' then
+        local showMana = (not isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManabar']) or (isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avShowMana'])
+        if showMana and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManaValues'] and v.class ~= 'WARRIOR' and v.class ~= 'ROGUE' then
             local manaFormatted
             if maxMana > 100 then
                 manaFormatted = (currMana >= 1000) and string.format("%.1fk", currMana / 1000) or tostring(currMana)
@@ -514,7 +539,7 @@ local function drawUnits(list)
             units[i].manaText:Hide()
         end
 
-        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayOnlyNearby'] and not v.nearby then
+        if ((FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayOnlyNearby']) or hideFarInAV) and not v.nearby then
             units[i]:Hide()
         else
             units[i]:Show()

@@ -13,7 +13,7 @@ if FOSTERFRAMESPLAYERDATA == nil then
     FOSTERFRAMESPLAYERDATA = {
         -- Display & Layout
         ['scale']                        = 1,
-        ['unitWidth']                    = 126,
+        ['unitWidth']                    = 150,
         ['unitHeight']                   = 24,
         ['groupsize']                    = 5,
         ['layout']                       = 'block',
@@ -24,6 +24,7 @@ if FOSTERFRAMESPLAYERDATA == nil then
         ['displayManabar']               = false,
         ['displayManaValues']            = false,
         ['displayOnlyNearby']            = false,
+
         
         -- Battlegrounds Suite
         ['avMode']                       = true,
@@ -365,14 +366,14 @@ local function CreateTabContainers()
             widthSlider:SetWidth(160)
             widthSlider:SetHeight(16)
             widthSlider:SetPoint('TOPLEFT', widthLabel, 'BOTTOMLEFT', 5, -8)
-            widthSlider:SetMinMaxValues(80, 200)
+            widthSlider:SetMinMaxValues(100, 240)
             widthSlider:SetValueStep(2)
-            _G[widthSlider:GetName() .. 'Low']:SetText('80px')
-            _G[widthSlider:GetName() .. 'High']:SetText('200px')
-            _G[widthSlider:GetName() .. 'Text']:SetText((FOSTERFRAMESPLAYERDATA['unitWidth'] or 126) .. 'px')
+            _G[widthSlider:GetName() .. 'Low']:SetText('100px')
+            _G[widthSlider:GetName() .. 'High']:SetText('240px')
+            _G[widthSlider:GetName() .. 'Text']:SetText((FOSTERFRAMESPLAYERDATA['unitWidth'] or 150) .. 'px')
 
             widthSlider.ttTitle = 'Frame Width'
-            widthSlider.ttText = 'Adjusts the horizontal width in pixels of each enemy unit card (default: 126px).'
+            widthSlider.ttText = 'Adjusts the horizontal width in pixels of each enemy unit card (default: 150px).'
 
             widthSlider:SetScript('OnValueChanged', function()
                 local v = math.floor(this:GetValue() + 0.5)
@@ -396,11 +397,12 @@ local function CreateTabContainers()
             heightSlider:SetWidth(160)
             heightSlider:SetHeight(16)
             heightSlider:SetPoint('TOPLEFT', heightLabel, 'BOTTOMLEFT', 5, -8)
-            heightSlider:SetMinMaxValues(16, 45)
+            heightSlider:SetMinMaxValues(18, 45)
             heightSlider:SetValueStep(1)
-            _G[heightSlider:GetName() .. 'Low']:SetText('16px')
+            _G[heightSlider:GetName() .. 'Low']:SetText('18px')
             _G[heightSlider:GetName() .. 'High']:SetText('45px')
             _G[heightSlider:GetName() .. 'Text']:SetText((FOSTERFRAMESPLAYERDATA['unitHeight'] or 24) .. 'px')
+
 
             heightSlider.ttTitle = 'Frame Height'
             heightSlider.ttText = 'Adjusts the vertical height in pixels of each enemy unit card (default: 24px).'

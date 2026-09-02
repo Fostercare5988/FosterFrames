@@ -11,15 +11,16 @@ local BACKDROP = {
     insets   = { left = 1, right = 1, top = 1, bottom = 1 }
 }
 
-local unitWidth, unitHeight = 126, 22
-local hpWidth, hpHeight = 102, 22
+local unitWidth, unitHeight = 150, 24
+local hpWidth, hpHeight = 124, 24
 local manaBarHeight = 3
-local iconSize = 22
-local castBarHeight = 22
+local iconSize = 24
+local castBarHeight = 24
 
 function UIElementsGetDimensions()
     return unitWidth, unitHeight, hpWidth, hpHeight, manaBarHeight, iconSize, castBarHeight
 end
+
 
 function CreateEnemyUnitFrame(name, parentFrame)
     local btn = CreateFrame('Button', name, parentFrame)

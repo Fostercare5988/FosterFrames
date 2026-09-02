@@ -291,13 +291,17 @@ local function renderTestVisuals()
                 units[i].distText:Hide()
             end
 
-            -- CC / Class Icon & Cast Bar (Integrated Overlay)
+            -- CC / Class Icon & Cast Bar (Integrated Overlay - Hides name/hp while casting for zero collision)
             if data.spell and data.cast > 0 and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['castTimers'] ~= false then
                 units[i].ffCastbar:SetMinMaxValues(0, data.castMax)
                 units[i].ffCastbar:SetValue(data.castMax - data.cast)
                 units[i].ffCastbar.text:SetText(data.spell)
                 units[i].ffCastbar.timer:SetText(data.cast .. "s")
                 units[i].ffCastbar:Show()
+                units[i].name:Hide()
+                units[i].hpText:Hide()
+                units[i].distText:Hide()
+                units[i].manaText:Hide()
                 if data.icon then
                     units[i].cc.icon:SetTexture(data.icon)
                 else
@@ -305,6 +309,22 @@ local function renderTestVisuals()
                 end
             else
                 units[i].ffCastbar:Hide()
+                if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayNames'] ~= false then
+                    units[i].name:Show()
+                else
+                    units[i].name:Hide()
+                end
+                units[i].hpText:Show()
+                if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['showDistance'] ~= false then
+                    units[i].distText:Show()
+                else
+                    units[i].distText:Hide()
+                end
+                if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManaValues'] and data.powerType == 'mana' then
+                    units[i].manaText:Show()
+                else
+                    units[i].manaText:Hide()
+                end
                 units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', data.class))
             end
             units[i].cc.icon:SetVertexColor(1, 1, 1, 1)
@@ -616,11 +636,21 @@ local function updateUnits()
             units[i].ffCastbar.text:SetText((castInfo.spell or ''):sub(1, 12))
             units[i].ffCastbar.timer:SetText(FosterFrames.Helpers.GetTimerLeft(castInfo.timeEnd, 3) .. 's')
             units[i].ffCastbar:Show()
+            units[i].name:Hide()
+            units[i].hpText:Hide()
+            units[i].distText:Hide()
+            units[i].manaText:Hide()
             if castInfo.icon then
                 units[i].cc.icon:SetTexture(castInfo.icon)
             end
         else
             units[i].ffCastbar:Hide()
+            if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayNames'] ~= false then
+                units[i].name:Show()
+            else
+                units[i].name:Hide()
+            end
+            units[i].hpText:Show()
             local trinket = FOSTERFRAMECOREGetTrinketCooldown(v.guid)
             if trinket then
                 units[i].cc.icon:SetTexture(trinket.icon or [[Interface\Icons\inv_jewelry_trinketpvp_01]])
@@ -630,6 +660,7 @@ local function updateUnits()
                 units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', v.class))
             end
         end
+
 
         -- Target count live update
         local tarCount = v.targetcount or 0

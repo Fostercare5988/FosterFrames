@@ -1,14 +1,21 @@
--- FosterFrames - UI Frame Template Generator
--- Enhanced 1.12.1 Engine Stack
+-- FosterFrames - Modernized UI Frame Template Generator
+-- Enhanced 1.12.1 Engine Stack (ClassicAPI, SuperWoW, UnitXP SP3)
 
 local TEXTURE  = [[Interface\AddOns\FosterFrames\globals\resources\barTexture]]
-local BACKDROP = { bgFile = [[Interface\Tooltips\UI-Tooltip-Background]] }
+local BACKDROP = {
+    bgFile   = [[Interface\Tooltips\UI-Tooltip-Background]],
+    edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]],
+    tile     = true,
+    tileSize = 8,
+    edgeSize = 8,
+    insets   = { left = 1, right = 1, top = 1, bottom = 1 }
+}
 
-local unitWidth, unitHeight = 126, 24
-local hpWidth, hpHeight = 100, 18
-local manaBarHeight = 5
-local iconSize = 23
-local castBarHeight = 9
+local unitWidth, unitHeight = 126, 22
+local hpWidth, hpHeight = 102, 22
+local manaBarHeight = 3
+local iconSize = 22
+local castBarHeight = 22
 
 function UIElementsGetDimensions()
     return unitWidth, unitHeight, hpWidth, hpHeight, manaBarHeight, iconSize, castBarHeight
@@ -22,9 +29,7 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn:EnableMouse(true)
     btn.mo = false
 
-    btn.border = CreateBorder(nil, btn, 12.8, 1 / 4.5)
-
-    -- Health status bar (100 x 18)
+    -- Health status bar (Smooth class-colored bar)
     btn.hpbar = CreateFrame('StatusBar', nil, btn)
     btn.hpbar:SetFrameLevel(1)
     btn.hpbar:EnableMouse(false)
@@ -33,30 +38,35 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.hpbar:SetHeight(hpHeight)
     btn.hpbar:SetMinMaxValues(0, 100)
     btn.hpbar:SetPoint('TOPLEFT', btn, 'TOPLEFT', 0, 0)
-    btn.hpbar:SetBackdrop(BACKDROP)
-    btn.hpbar:SetBackdropColor(0, 0, 0, 0.6)
+    btn.hpbar:SetBackdrop({ bgFile = [[Interface\Tooltips\UI-Tooltip-Background]] })
+    btn.hpbar:SetBackdropColor(0, 0, 0, 0.65)
     SmoothBar(btn.hpbar)
 
-    -- Mana status bar (100 x 5)
-    btn.manabar = CreateFrame('StatusBar', nil, btn)
-    btn.manabar:SetFrameLevel(1)
+    btn.hpbar.border = CreateBorder(nil, btn.hpbar, 10, 1 / 5)
+    btn.hpbar.border:SetFrameLevel(2)
+
+    -- Mana / Power Status Bar (Embedded 3px hairline bar at bottom of card)
+    btn.manabar = CreateFrame('StatusBar', nil, btn.hpbar)
+    btn.manabar:SetFrameLevel(2)
     btn.manabar:EnableMouse(false)
     btn.manabar:SetStatusBarTexture(TEXTURE)
     btn.manabar:SetHeight(manaBarHeight)
-    btn.manabar:SetWidth(hpWidth)
-    btn.manabar:SetPoint('TOPLEFT', btn.hpbar, 'BOTTOMLEFT', 0, 0)
-    btn.manabar:SetBackdrop(BACKDROP)
-    btn.manabar:SetBackdropColor(0, 0, 0, 0.6)
+    btn.manabar:SetPoint('BOTTOMLEFT', btn.hpbar, 'BOTTOMLEFT', 0, 0)
+    btn.manabar:SetPoint('BOTTOMRIGHT', btn.hpbar, 'BOTTOMRIGHT', 0, 0)
+    btn.manabar:SetBackdrop({ bgFile = [[Interface\Tooltips\UI-Tooltip-Background]] })
+    btn.manabar:SetBackdropColor(0, 0, 0, 0.7)
+    btn.manabar:Hide()
     SmoothBar(btn.manabar)
 
-    -- CC / Class / Spec icon (23 x 23 flush on right side)
+    -- Class / Spell / CC Icon (Flush on right edge, matching card height)
     btn.cc = CreateFrame('Frame', name .. 'CC', btn)
     btn.cc:EnableMouse(false)
     btn.cc:SetWidth(iconSize)
     btn.cc:SetHeight(iconSize)
-    btn.cc:SetPoint('TOPLEFT', btn, 'TOPLEFT', hpWidth + 3, 0)
+    btn.cc:SetPoint('LEFT', btn.hpbar, 'RIGHT', 2, 0)
+    btn.cc:SetFrameLevel(3)
 
-    btn.cc.border = CreateBorder(nil, btn.cc, 12.8, 1 / 4.5)
+    btn.cc.border = CreateBorder(nil, btn.cc, 10, 1 / 5)
     btn.cc.border:SetFrameLevel(5)
 
     btn.cc.icon = btn.cc:CreateTexture(nil, 'ARTWORK')
@@ -64,7 +74,7 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.cc.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
     btn.cc.bg = btn.cc:CreateTexture(nil, 'BACKGROUND')
-    btn.cc.bg:SetTexture(0, 0, 0, 0.6)
+    btn.cc.bg:SetTexture(0, 0, 0, 0.7)
     btn.cc.bg:SetAllPoints()
 
     btn.cc.durationFrame = CreateFrame('Frame', nil, btn.cc)
@@ -73,7 +83,7 @@ function CreateEnemyUnitFrame(name, parentFrame)
 
     btn.cc.duration = btn.cc.durationFrame:CreateFontString(nil, 'OVERLAY')
     btn.cc.duration:SetFont(STANDARD_TEXT_FONT, 9, 'OUTLINE')
-    btn.cc.duration:SetTextColor(0.9, 0.9, 0.2, 1)
+    btn.cc.duration:SetTextColor(0.95, 0.95, 0.2, 1)
     btn.cc.duration:SetShadowOffset(1, -1)
     btn.cc.duration:SetShadowColor(0, 0, 0)
     btn.cc.duration:SetPoint('BOTTOM', btn.cc, 'BOTTOM', 0, 1)
@@ -81,55 +91,51 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.cc.cd = CreateCooldown(btn.cc, 0.58, true)
     btn.cc.cd:SetAlpha(1)
 
-    -- Cast bar (Attaches beneath card when casting)
-    btn.ffCastbar = CreateFrame('StatusBar', nil, btn)
+    -- Integrated In-Card Castbar (Overlay directly inside hpbar - Zero overlap between rows!)
+    btn.ffCastbar = CreateFrame('StatusBar', nil, btn.hpbar)
+    btn.ffCastbar:SetFrameLevel(4)
     btn.ffCastbar:EnableMouse(false)
     btn.ffCastbar:SetStatusBarTexture(TEXTURE)
-    btn.ffCastbar:SetHeight(castBarHeight)
-    btn.ffCastbar:SetWidth(unitWidth - castBarHeight - 2)
-    btn.ffCastbar:SetStatusBarColor(1, 0.4, 0)
-    btn.ffCastbar:SetPoint('TOPLEFT', btn, 'BOTTOMLEFT', castBarHeight + 1, -1)
-    btn.ffCastbar:SetBackdrop(BACKDROP)
-    btn.ffCastbar:SetBackdropColor(0, 0, 0, 0.7)
+    btn.ffCastbar:SetAllPoints(btn.hpbar)
+    btn.ffCastbar:SetStatusBarColor(1.0, 0.55, 0.0, 0.9)
+    btn.ffCastbar:SetBackdrop({ bgFile = [[Interface\Tooltips\UI-Tooltip-Background]] })
+    btn.ffCastbar:SetBackdropColor(0, 0, 0, 0.75)
     btn.ffCastbar:Hide()
 
-    btn.ffCastbar.b = CreateBorder(nil, btn.ffCastbar, 9)
-    btn.ffCastbar.b:SetPadding(0.4)
-
-    btn.ffCastbar.iconborder = CreateFrame('Frame', nil, btn.ffCastbar)
-    btn.ffCastbar.iconborder:SetWidth(castBarHeight + 1)
-    btn.ffCastbar.iconborder:SetHeight(castBarHeight + 1)
-    btn.ffCastbar.iconborder:SetPoint('RIGHT', btn.ffCastbar, 'LEFT', -1, 0)
-    btn.ffCastbar.iconborder.border = CreateBorder(nil, btn.ffCastbar.iconborder, 8)
-
-    btn.ffCastbar.icon = btn.ffCastbar.iconborder:CreateTexture(nil, 'ARTWORK')
-    btn.ffCastbar.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-    btn.ffCastbar.icon:SetAllPoints()
-
     btn.ffCastbar.text = btn.ffCastbar:CreateFontString(nil, 'OVERLAY')
-    btn.ffCastbar.text:SetTextColor(1, 1, 1)
-    btn.ffCastbar.text:SetFont(STANDARD_TEXT_FONT, 8, 'OUTLINE')
+    btn.ffCastbar.text:SetTextColor(1, 1, 1, 1)
+    btn.ffCastbar.text:SetFont(STANDARD_TEXT_FONT, 9, 'OUTLINE')
     btn.ffCastbar.text:SetShadowColor(0, 0, 0)
-    btn.ffCastbar.text:SetPoint('LEFT', btn.ffCastbar, 'LEFT', 2, 0)
+    btn.ffCastbar.text:SetShadowOffset(1, -1)
+    btn.ffCastbar.text:SetPoint('LEFT', btn.ffCastbar, 'LEFT', 4, 0)
+    btn.ffCastbar.text:SetJustifyH('LEFT')
 
     btn.ffCastbar.timer = btn.ffCastbar:CreateFontString(nil, 'OVERLAY')
-    btn.ffCastbar.timer:SetFont(STANDARD_TEXT_FONT, 7, 'OUTLINE')
-    btn.ffCastbar.timer:SetTextColor(1, 1, 1)
+    btn.ffCastbar.timer:SetFont(STANDARD_TEXT_FONT, 8, 'OUTLINE')
+    btn.ffCastbar.timer:SetTextColor(1, 0.9, 0.3, 1)
     btn.ffCastbar.timer:SetShadowColor(0, 0, 0)
-    btn.ffCastbar.timer:SetPoint('RIGHT', btn.ffCastbar, 'RIGHT', -1, 0)
-    btn.ffCastbar.timer:SetText('1.5')
+    btn.ffCastbar.timer:SetShadowOffset(1, -1)
+    btn.ffCastbar.timer:SetPoint('RIGHT', btn.ffCastbar, 'RIGHT', -4, 0)
+    btn.ffCastbar.timer:SetJustifyH('RIGHT')
+    btn.ffCastbar.timer:SetText('1.5s')
+
+    btn.ffCastbar.b = btn.hpbar.border
 
     -- Name text (Left Aligned on HP Bar)
-    btn.name = btn:CreateFontString(nil, 'OVERLAY')
+    btn.name = btn.hpbar:CreateFontString(nil, 'OVERLAY')
     btn.name:SetFont(STANDARD_TEXT_FONT, 9, 'OUTLINE')
-    btn.name:SetTextColor(0.9, 0.9, 0.9, 0.9)
-    btn.name:SetPoint('LEFT', btn.hpbar, 'LEFT', 3, 0)
+    btn.name:SetTextColor(0.95, 0.95, 0.95, 1)
+    btn.name:SetShadowOffset(1, -1)
+    btn.name:SetShadowColor(0, 0, 0)
+    btn.name:SetPoint('LEFT', btn.hpbar, 'LEFT', 4, 0)
     btn.name:SetJustifyH('LEFT')
 
     -- Live 3D Distance text (Right next to Name)
     btn.distText = btn.hpbar:CreateFontString(nil, 'OVERLAY')
     btn.distText:SetFont(STANDARD_TEXT_FONT, 8, 'OUTLINE')
     btn.distText:SetTextColor(0.4, 1.0, 0.4, 0.95)
+    btn.distText:SetShadowOffset(1, -1)
+    btn.distText:SetShadowColor(0, 0, 0)
     btn.distText:SetPoint('LEFT', btn.name, 'RIGHT', 3, 0)
     btn.distText:SetJustifyH('LEFT')
     btn.distText:Hide()
@@ -138,9 +144,10 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.hpText = btn.hpbar:CreateFontString(nil, 'OVERLAY')
     btn.hpText:SetFont(STANDARD_TEXT_FONT, 8, 'OUTLINE')
     btn.hpText:SetTextColor(1, 1, 1, 0.95)
-    btn.hpText:SetPoint('RIGHT', btn.hpbar, 'RIGHT', -2, 0)
+    btn.hpText:SetShadowOffset(1, -1)
+    btn.hpText:SetShadowColor(0, 0, 0)
+    btn.hpText:SetPoint('RIGHT', btn.hpbar, 'RIGHT', -4, 0)
     btn.hpText:SetJustifyH('RIGHT')
-
 
     -- Mana value text
     btn.manaText = btn.manabar:CreateFontString(nil, 'OVERLAY')
@@ -150,11 +157,11 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.manaText:SetJustifyH('RIGHT')
     btn.manaText:Hide()
 
-    -- Target count badge
-    btn.targetCount = CreateFrame('Frame', nil, btn)
+    -- Target count badge (Modern Focus Fire Badge on top-left of Card)
+    btn.targetCount = CreateFrame('Frame', nil, btn.hpbar)
     btn.targetCount:SetWidth(14)
     btn.targetCount:SetHeight(14)
-    btn.targetCount:SetPoint('TOPLEFT', btn.hpbar, 'TOPLEFT', 1, -1)
+    btn.targetCount:SetPoint('TOPLEFT', btn.hpbar, 'TOPLEFT', 0, 2)
     btn.targetCount:SetFrameLevel(7)
 
     btn.targetCount.text = btn.targetCount:CreateFontString(nil, 'OVERLAY')
@@ -164,6 +171,8 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.targetCount.text:SetShadowColor(0, 0, 0)
     btn.targetCount.text:SetPoint('CENTER', btn.targetCount)
     btn.targetCount.text:SetText('')
+
+    btn.border = btn.hpbar.border
 
     return btn
 end

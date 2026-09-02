@@ -117,16 +117,14 @@ function FOSTERFRAMES_UpdateDimensions(newWidth, newHeight)
     local isAVMode = isAV and (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avMode'] ~= false)
 
     local width = newWidth or (isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avUnitWidth']) or (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['unitWidth']) or (isAVMode and 112 or 126)
-    local height = newHeight or (isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avUnitHeight']) or (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['unitHeight']) or (isAVMode and 16 or 24)
+    local height = newHeight or (isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avUnitHeight']) or (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['unitHeight']) or (isAVMode and 16 or 22)
 
     unitWidth = width
     unitHeight = height
 
-    local iSize = math.max(14, height - 1)
+    local iSize = height
     local hpW = math.max(30, width - iSize - 2)
     local showMana = (not isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManabar']) or (isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avShowMana'])
-    local manaH = showMana and math.max(3, math.floor(height * 0.22)) or 0
-    local hpH = math.max(8, height - manaH - 1)
 
     for i = 1, unitLimit do
         local btn = units[i]
@@ -135,11 +133,10 @@ function FOSTERFRAMES_UpdateDimensions(newWidth, newHeight)
             btn:SetHeight(height)
 
             btn.hpbar:SetWidth(hpW)
-            btn.hpbar:SetHeight(showMana and hpH or (height - 1))
+            btn.hpbar:SetHeight(height)
 
-            btn.manabar:SetWidth(hpW)
-            if showMana and manaH > 0 then
-                btn.manabar:SetHeight(manaH)
+            if showMana then
+                btn.manabar:SetHeight(3)
                 btn.manabar:Show()
             else
                 btn.manabar:Hide()
@@ -147,15 +144,15 @@ function FOSTERFRAMES_UpdateDimensions(newWidth, newHeight)
 
             btn.cc:SetWidth(iSize)
             btn.cc:SetHeight(iSize)
-            btn.cc:SetPoint('TOPLEFT', btn, 'TOPLEFT', hpW + 2, 0)
+            btn.cc:SetPoint('LEFT', btn.hpbar, 'RIGHT', 2, 0)
 
-            btn.ffCastbar:SetWidth(width - 4)
-            btn.ffCastbar:SetHeight(math.min(8, height - 4))
+            btn.ffCastbar:SetAllPoints(btn.hpbar)
         end
     end
 
     if arrangeUnits then arrangeUnits() end
 end
+
 
 
 -- Create Unit Frames
@@ -251,7 +248,7 @@ local function renderTestVisuals()
             local clr = RAID_CLASS_COLORS[data.class] or RAID_CLASS_COLORS['WARRIOR']
             local pClr = RGB_POWER_COLORS[data.powerType] or RGB_POWER_COLORS['mana']
 
-            units[i].name:SetText(data.name:sub(1, 6))
+            units[i].name:SetText(data.name:sub(1, 9))
             units[i].name:Show()
             units[i].tar = data.name
             units[i].guid = "0xTEST" .. i
@@ -284,8 +281,32 @@ local function renderTestVisuals()
                 units[i].manaText:Hide()
             end
 
-            -- CC / Spec Icon
-            units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', data.class))
+            -- Live 3D Distance preview (alternate yard tags for test realism)
+            if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['showDistance'] ~= false then
+                local d = 8 + (i * 3)
+                local dColor = (d <= 10 and "|cffff4444") or (d <= 30 and "|cffffff44") or "|cff44ff44"
+                units[i].distText:SetText(dColor .. d .. "y|r")
+                units[i].distText:Show()
+            else
+                units[i].distText:Hide()
+            end
+
+            -- CC / Class Icon & Cast Bar (Integrated Overlay)
+            if data.spell and data.cast > 0 and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['castTimers'] ~= false then
+                units[i].ffCastbar:SetMinMaxValues(0, data.castMax)
+                units[i].ffCastbar:SetValue(data.castMax - data.cast)
+                units[i].ffCastbar.text:SetText(data.spell)
+                units[i].ffCastbar.timer:SetText(data.cast .. "s")
+                units[i].ffCastbar:Show()
+                if data.icon then
+                    units[i].cc.icon:SetTexture(data.icon)
+                else
+                    units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', data.class))
+                end
+            else
+                units[i].ffCastbar:Hide()
+                units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', data.class))
+            end
             units[i].cc.icon:SetVertexColor(1, 1, 1, 1)
 
             -- Target Count
@@ -295,19 +316,6 @@ local function renderTestVisuals()
             else
                 units[i].targetCount.text:SetText("")
                 units[i].targetCount.text:Hide()
-            end
-
-            -- Cast Bar
-            if data.spell and data.cast > 0 then
-                units[i].ffCastbar:SetMinMaxValues(0, data.castMax)
-                units[i].ffCastbar:SetValue(data.castMax - data.cast)
-                units[i].ffCastbar.text:SetText(data.spell)
-                units[i].ffCastbar.timer:SetText(data.cast .. "s")
-                units[i].ffCastbar.icon:SetTexture(data.icon)
-                units[i].ffCastbar.b:SetColor(0.1, 0.1, 0.1)
-                units[i].ffCastbar:Show()
-            else
-                units[i].ffCastbar:Hide()
             end
 
             units[i]:Show()
@@ -595,10 +603,9 @@ local function updateUnits()
             units[i].manabar:SetBackdropColor(0, 0, 0, 0.6)
         end
 
-        -- Cast bar (UnitCastingInfo / UnitChannelInfo)
+        -- Cast bar (UnitCastingInfo / UnitChannelInfo - Integrated In-Card Progress)
         local castInfo = SPELLCASTINGCOREgetCast(v.name, unitID)
-        units[i].ffCastbar:Hide()
-        if castInfo then
+        if castInfo and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['castTimers'] ~= false then
             local duration = castInfo.timeEnd - castInfo.timeStart
             units[i].ffCastbar:SetMinMaxValues(0, duration)
             if castInfo.inverse then
@@ -606,24 +613,22 @@ local function updateUnits()
             else
                 units[i].ffCastbar:SetValue((now - castInfo.timeStart) % duration)
             end
-            local charLim = (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['castTimers']) and 14 or 15
-            units[i].ffCastbar.text:SetText((castInfo.spell or ''):sub(1, charLim))
-            units[i].ffCastbar.timer:SetText(FosterFrames.Helpers.GetTimerLeft(castInfo.timeEnd, 3))
-            units[i].ffCastbar.icon:SetTexture(castInfo.icon)
-            if castInfo.borderClr then
-                units[i].ffCastbar.b:SetColor(castInfo.borderClr[1], castInfo.borderClr[2], castInfo.borderClr[3])
-            else
-                units[i].ffCastbar.b:SetColor(0.1, 0.1, 0.1)
-            end
+            units[i].ffCastbar.text:SetText((castInfo.spell or ''):sub(1, 12))
+            units[i].ffCastbar.timer:SetText(FosterFrames.Helpers.GetTimerLeft(castInfo.timeEnd, 3) .. 's')
             units[i].ffCastbar:Show()
-        end
-
-        -- Trinket CD (overlays or overrides CC icon if on cooldown)
-        local trinket = FOSTERFRAMECOREGetTrinketCooldown(v.guid)
-        if trinket then
-            units[i].cc.icon:SetTexture(trinket.icon or [[Interface\Icons\inv_jewelry_trinketpvp_01]])
-            units[i].cc.cd:SetTimers(trinket.start, trinket['end'])
-            units[i].cc.cd:Show()
+            if castInfo.icon then
+                units[i].cc.icon:SetTexture(castInfo.icon)
+            end
+        else
+            units[i].ffCastbar:Hide()
+            local trinket = FOSTERFRAMECOREGetTrinketCooldown(v.guid)
+            if trinket then
+                units[i].cc.icon:SetTexture(trinket.icon or [[Interface\Icons\inv_jewelry_trinketpvp_01]])
+                units[i].cc.cd:SetTimers(trinket.start, trinket['end'])
+                units[i].cc.cd:Show()
+            else
+                units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', v.class))
+            end
         end
 
         -- Target count live update
@@ -635,6 +640,7 @@ local function updateUnits()
             units[i].targetCount.text:SetText("")
             units[i].targetCount.text:Hide()
         end
+
 
         -- Live 3D Distance display update
         if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['showDistance'] ~= false and v.distance and v.distance > 0 and v.distance < 120 and v.nearby then

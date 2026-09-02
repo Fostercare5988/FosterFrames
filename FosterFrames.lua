@@ -64,6 +64,40 @@ fosterFrame.Title = fosterFrame:CreateFontString(nil, 'OVERLAY')
 fosterFrame.Title:SetFont(STANDARD_TEXT_FONT, 12, 'OUTLINE')
 fosterFrame.Title:SetPoint('CENTER', fosterFrame, 'CENTER', 0, 1)
 
+-- Header Lock/Unlock Toggle Button
+fosterFrame.lockBtn = CreateFrame('Button', 'fosterFrameHeaderLockButton', fosterFrame)
+fosterFrame.lockBtn:SetWidth(24)
+fosterFrame.lockBtn:SetHeight(16)
+fosterFrame.lockBtn:SetPoint('LEFT', fosterFrame, 'LEFT', 4, 1)
+
+fosterFrame.lockBtn.text = fosterFrame.lockBtn:CreateFontString(nil, 'OVERLAY')
+fosterFrame.lockBtn.text:SetFont(STANDARD_TEXT_FONT, 11, 'OUTLINE')
+fosterFrame.lockBtn.text:SetPoint('CENTER', fosterFrame.lockBtn, 'CENTER', 0, 0)
+fosterFrame.lockBtn.text:SetTextColor(0.85, 0.85, 0.85, 0.9)
+fosterFrame.lockBtn.text:SetText('[ - ]')
+
+fosterFrame.lockBtn:SetScript('OnClick', function()
+    if not FOSTERFRAMESPLAYERDATA then return end
+    FOSTERFRAMESPLAYERDATA['frameMovable'] = not FOSTERFRAMESPLAYERDATA['frameMovable']
+    if showHideBars then showHideBars() end
+    if fosterFramesSettings and fosterFramesSettings.unlock then
+        fosterFramesSettings.unlock:SetText(FOSTERFRAMESPLAYERDATA['frameMovable'] and 'Lock' or 'Unlock')
+    end
+end)
+
+fosterFrame.lockBtn:SetScript('OnEnter', function()
+    this.text:SetTextColor(1, 0.9, 0.2, 1)
+    GameTooltip:SetOwner(this, "ANCHOR_TOPLEFT", 0, 4)
+    GameTooltip:AddLine("Lock / Unlock Frames", 1, 0.82, 0)
+    GameTooltip:AddLine(FOSTERFRAMESPLAYERDATA['frameMovable'] and "Click to lock frame position." or "Click to unlock frame for dragging.", 0.9, 0.9, 0.9)
+    GameTooltip:Show()
+end)
+
+fosterFrame.lockBtn:SetScript('OnLeave', function()
+    this.text:SetTextColor(0.85, 0.85, 0.85, 0.9)
+    GameTooltip:Hide()
+end)
+
 fosterFrame.totalPlayers = fosterFrame:CreateFontString(nil, 'OVERLAY')
 fosterFrame.totalPlayers:SetFont(STANDARD_TEXT_FONT, 12, 'OUTLINE')
 fosterFrame.totalPlayers:SetPoint('RIGHT', fosterFrame, 'RIGHT', -4, 1)
@@ -220,7 +254,8 @@ local function renderTestVisuals()
             local clr = RAID_CLASS_COLORS[data.class] or RAID_CLASS_COLORS['WARRIOR']
             local pClr = RGB_POWER_COLORS[data.powerType] or RGB_POWER_COLORS['mana']
 
-            units[i].name:SetText(data.name)
+            units[i].name:SetText(data.name:sub(1, 6))
+            units[i].name:Show()
             units[i].tar = data.name
             units[i].guid = "0xTEST" .. i
             units[i].hoverEnabled = true
@@ -234,27 +269,20 @@ local function renderTestVisuals()
             units[i].manabar:SetMinMaxValues(0, data.maxMana)
             units[i].manabar:SetValue(data.mana)
 
-            if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayHealthValues'] then
-                units[i].hpText:SetText(data.hp .. " / " .. data.maxHp)
-                units[i].hpText:Show()
-                units[i].name:Hide()
+            local hpFormatted
+            if data.maxHp > 100 and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayHealthValues'] then
+                hpFormatted = (data.hp >= 1000) and string.format("%.1fk", data.hp / 1000) or tostring(data.hp)
             else
-                units[i].hpText:Hide()
-                if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayNames'] then
-                    units[i].name:Show()
-                else
-                    units[i].name:Hide()
-                end
+                local pct = math.floor((data.hp / data.maxHp) * 100)
+                hpFormatted = pct .. "%"
             end
+            units[i].hpText:SetText(hpFormatted)
+            units[i].hpText:Show()
 
-            if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManaValues'] then
-                if data.powerType == 'mana' then
-                    units[i].manaText:SetText(data.mana .. " / " .. data.maxMana)
-                    units[i].manaText:Show()
-                else
-                    units[i].manaText:SetText("")
-                    units[i].manaText:Hide()
-                end
+            if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManaValues'] and data.powerType == 'mana' then
+                local manaFormatted = (data.mana >= 1000) and string.format("%.1fk", data.mana / 1000) or tostring(data.mana)
+                units[i].manaText:SetText(manaFormatted)
+                units[i].manaText:Show()
             else
                 units[i].manaText:Hide()
             end
@@ -391,8 +419,14 @@ local function showHideBars()
     local isUnlocked = FOSTERFRAMESPLAYERDATA['frameMovable'] or (fosterFramesSettings and fosterFramesSettings:IsShown())
     if isUnlocked then
         fosterFrameDisplay.bg:Show()
+        if fosterFrameDisplay.lockBtn and fosterFrameDisplay.lockBtn.text then
+            fosterFrameDisplay.lockBtn.text:SetText('[ - ]')
+        end
     else
         fosterFrameDisplay.bg:Hide()
+        if fosterFrameDisplay.lockBtn and fosterFrameDisplay.lockBtn.text then
+            fosterFrameDisplay.lockBtn.text:SetText('[ + ]')
+        end
     end
     fosterFrameDisplay:EnableMouse(isUnlocked)
 end
@@ -452,7 +486,14 @@ local function drawUnits(list)
             units[i].cc.cd:Hide()
         end
 
-        units[i].name:SetText((v.name or 'Unknown'):sub(1, 7))
+        local displayName = (v.name or 'Unknown'):sub(1, 6)
+        units[i].name:SetText(displayName)
+        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayNames'] == false then
+            units[i].name:Hide()
+        else
+            units[i].name:Show()
+        end
+
         units[i].tar = v.name
         units[i].guid = v.guid
 
@@ -472,28 +513,30 @@ local function drawUnits(list)
         units[i].hpbar:SetMinMaxValues(0, maxHP)
         units[i].hpbar:SetValue(currHP)
 
-        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayHealthValues'] then
-            units[i].hpText:SetText(currHP .. " / " .. maxHP)
-            units[i].hpText:Show()
-            units[i].name:Hide()
+        local hpFormatted
+        if maxHP > 100 and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayHealthValues'] then
+            hpFormatted = (currHP >= 1000) and string.format("%.1fk", currHP / 1000) or tostring(currHP)
         else
-            units[i].hpText:Hide()
-            if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayNames'] then units[i].name:Show() end
+            local pct = (maxHP > 0) and math.floor((currHP / maxHP) * 100) or 100
+            hpFormatted = pct .. "%"
         end
+        units[i].hpText:SetText(hpFormatted)
+        units[i].hpText:Show()
 
         local maxMana = v.maxmana or 100
         local currMana = v.mana or (not v.nearby and maxMana) or 100
         units[i].manabar:SetMinMaxValues(0, maxMana)
         units[i].manabar:SetValue(currMana)
 
-        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManaValues'] then
-            if v.class ~= 'WARRIOR' and v.class ~= 'ROGUE' then
-                units[i].manaText:SetText(currMana .. " / " .. maxMana)
-                units[i].manaText:Show()
+        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManaValues'] and v.class ~= 'WARRIOR' and v.class ~= 'ROGUE' then
+            local manaFormatted
+            if maxMana > 100 then
+                manaFormatted = (currMana >= 1000) and string.format("%.1fk", currMana / 1000) or tostring(currMana)
             else
-                units[i].manaText:SetText("")
-                units[i].manaText:Hide()
+                manaFormatted = tostring(math.floor(currMana)) .. "%"
             end
+            units[i].manaText:SetText(manaFormatted)
+            units[i].manaText:Show()
         else
             units[i].manaText:Hide()
         end

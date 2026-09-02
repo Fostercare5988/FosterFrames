@@ -133,24 +133,26 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.ffCastbar.timer:SetPoint('RIGHT', btn.ffCastbar, 'RIGHT', -1, 0)
     btn.ffCastbar.timer:SetText('1.5')
 
-    -- Name text
+    -- Name text (Left Aligned on HP Bar)
     btn.name = btn:CreateFontString(nil, 'OVERLAY')
-    btn.name:SetFont(STANDARD_TEXT_FONT, 10, 'OUTLINE')
+    btn.name:SetFont(STANDARD_TEXT_FONT, 9, 'OUTLINE')
     btn.name:SetTextColor(0.9, 0.9, 0.9, 0.9)
-    btn.name:SetPoint('CENTER', btn.hpbar, 'CENTER', 0, 0)
+    btn.name:SetPoint('LEFT', btn.hpbar, 'LEFT', 3, 0)
+    btn.name:SetJustifyH('LEFT')
 
-    -- Health value text
+    -- Health value text (Right Aligned on HP Bar)
     btn.hpText = btn.hpbar:CreateFontString(nil, 'OVERLAY')
     btn.hpText:SetFont(STANDARD_TEXT_FONT, 8, 'OUTLINE')
-    btn.hpText:SetTextColor(1, 1, 1, 0.9)
-    btn.hpText:SetPoint('CENTER', btn.hpbar, 'CENTER', 0, 0)
-    btn.hpText:Hide()
+    btn.hpText:SetTextColor(1, 1, 1, 0.95)
+    btn.hpText:SetPoint('RIGHT', btn.hpbar, 'RIGHT', -2, 0)
+    btn.hpText:SetJustifyH('RIGHT')
 
     -- Mana value text
     btn.manaText = btn.manabar:CreateFontString(nil, 'OVERLAY')
     btn.manaText:SetFont(STANDARD_TEXT_FONT, 7, 'OUTLINE')
     btn.manaText:SetTextColor(1, 1, 1, 0.9)
-    btn.manaText:SetPoint('CENTER', btn.manabar, 'CENTER', 0, 0)
+    btn.manaText:SetPoint('RIGHT', btn.manabar, 'RIGHT', -2, 0)
+    btn.manaText:SetJustifyH('RIGHT')
     btn.manaText:Hide()
 
     -- Target count badge
@@ -170,9 +172,9 @@ function CreateEnemyUnitFrame(name, parentFrame)
 
     -- Raid target icon
     btn.raidTarget = CreateFrame('Frame', nil, btn)
-    btn.raidTarget:SetWidth(14)
-    btn.raidTarget:SetHeight(14)
-    btn.raidTarget:SetPoint('RIGHT', btn.hpbar, 'RIGHT', -2, 0)
+    btn.raidTarget:SetWidth(12)
+    btn.raidTarget:SetHeight(12)
+    btn.raidTarget:SetPoint('CENTER', btn.hpbar, 'CENTER', 0, 0)
     btn.raidTarget:SetFrameLevel(7)
 
     btn.raidTarget.icon = btn.raidTarget:CreateTexture(nil, 'ARTWORK')

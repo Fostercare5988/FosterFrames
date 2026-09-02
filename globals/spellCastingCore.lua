@@ -18,14 +18,18 @@ function SPELLCASTINGCOREgetCast(caster, unit)
     if not caster then return nil end
     if not unit or not UnitExists(unit) then return nil end
 
-    local spell, rank, displayName, icon, startTime, endTime, isTradeSkill, castID, notInterruptible = UnitCastingInfo(unit)
-    if spell and endTime and endTime > 0 then
-        return convertCastInfo(caster, spell, icon, startTime, endTime, false, notInterruptible)
+    if UnitCastingInfo then
+        local ok, spell, rank, displayName, icon, startTime, endTime, isTradeSkill, castID, notInterruptible = pcall(UnitCastingInfo, unit)
+        if ok and spell and endTime and endTime > 0 then
+            return convertCastInfo(caster, spell, icon, startTime, endTime, false, notInterruptible)
+        end
     end
 
-    spell, rank, displayName, icon, startTime, endTime, isTradeSkill, notInterruptible = UnitChannelInfo(unit)
-    if spell and endTime and endTime > 0 then
-        return convertCastInfo(caster, spell, icon, startTime, endTime, true, notInterruptible)
+    if UnitChannelInfo then
+        local ok, spell, rank, displayName, icon, startTime, endTime, isTradeSkill, notInterruptible = pcall(UnitChannelInfo, unit)
+        if ok and spell and endTime and endTime > 0 then
+            return convertCastInfo(caster, spell, icon, startTime, endTime, true, notInterruptible)
+        end
     end
 
     return nil

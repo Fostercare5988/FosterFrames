@@ -2,7 +2,6 @@
 -- Enhanced 1.12.1 Engine Stack (ClassicAPI / Zero GC Churn)
 
 local msgPrefix = {
-    ['RT']   = 'BGEFRT',
     ['EFC']  = 'BGEFEFC',
     ['BF']   = 'BGEFEBF',
     ['SCAN'] = 'BGEFSCN',
@@ -26,13 +25,6 @@ local function handleScan(message)
             ['guid']  = (guid ~= ' ' and guid) or nil,
         }
         FOSTERFRAMECOREAddSpottedUnit(u)
-    end
-end
-
-local function handleRaidTarget(message)
-    local sender, target, icon = message:match("([^/]+)/([^/]+)/([^/]+)")
-    if sender then
-        FOSTERFRAMECORESetRaidTarget(sender, target, icon)
     end
 end
 
@@ -61,9 +53,7 @@ f:SetScript('OnEvent', function()
     local message = arg2
     if not prefix or not message then return end
 
-    if prefix == msgPrefix['RT'] then
-        handleRaidTarget(message)
-    elseif prefix == msgPrefix['EFC'] then
+    if prefix == msgPrefix['EFC'] then
         handleEFC(message)
     elseif prefix == msgPrefix['SCAN'] then
         handleScan(message)

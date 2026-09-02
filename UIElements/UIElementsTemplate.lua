@@ -151,16 +151,5 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.targetCount.text:SetPoint('CENTER', btn.targetCount)
     btn.targetCount.text:SetText('')
 
-    -- Raid target icon
-    btn.raidTarget = CreateFrame('Frame', nil, btn)
-    btn.raidTarget:SetWidth(12)
-    btn.raidTarget:SetHeight(12)
-    btn.raidTarget:SetPoint('CENTER', btn.hpbar, 'CENTER', 0, 0)
-    btn.raidTarget:SetFrameLevel(7)
-
-    btn.raidTarget.icon = btn.raidTarget:CreateTexture(nil, 'ARTWORK')
-    btn.raidTarget.icon:SetTexture([[Interface\TargetingFrame\UI-RaidTargetingIcons]])
-    btn.raidTarget.icon:SetAllPoints()
-
     return btn
 end

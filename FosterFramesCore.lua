@@ -35,7 +35,6 @@ end
 
 -- State Tables
 local playerList = {}
-local raidTargets = {}
 local prioMembers = {}
 local cachedRaidTargets = {}
 local currentFlagCarriers = {}
@@ -403,14 +402,6 @@ local function globalNearbyMaintenance(now)
     end
 end
 
-local function removeRaidTarget(tar, icon)
-    for k, v in pairs(raidTargets) do
-        if v.icon == icon or v.name == tar then
-            raidTargets[k] = nil
-        end
-    end
-end
-
 local function orderUnitsforOutput()
     local list = {}
     for _, v in pairs(playerList) do
@@ -526,37 +517,6 @@ function FOSTERFRAMECORESetPlayersData(list)
     end
 end
 
-function FOSTERFRAMECORESendRaidTarget(icon, name)
-    if not name or (raidTargets[name] and raidTargets[name].icon == icon) then
-        name = 0
-    end
-    sendMSG('RT', name, icon, insideBG)
-    FOSTERFRAMECORESetRaidTarget(nil, name, icon)
-end
-
-function FOSTERFRAMECORESetRaidTarget(sender, tar, icon)
-    if playerList[tar] then
-        removeRaidTarget(tar, icon)
-        raidTargets[tar] = { name = playerList[tar].name, icon = icon }
-        if sender and sender ~= UnitName('player') and FOSTERFRAMESAnnounceRT then
-            FOSTERFRAMESAnnounceRT(raidTargets, playerList[tar])
-        end
-    end
-end
-
-function FOSTERFRAMECOREGetRaidTarget()
-    return raidTargets
-end
-
-function FOSTERFRAMECOREGetRaidTargetbyIcon(icon)
-    for _, v in pairs(raidTargets) do
-        if v.icon == icon then
-            return v.name
-        end
-    end
-    return nil
-end
-
 function FOSTERFRAMECOREIsInsideBG()
     return insideBG
 end
@@ -631,7 +591,6 @@ local function initializeValues()
     end
 
     table.wipe(playerList)
-    table.wipe(raidTargets)
     table.wipe(prioMembers)
     playerListRefresh = 0
 

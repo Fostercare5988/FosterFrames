@@ -12,8 +12,6 @@ local insideBG = false
 local enemyFactionColor = { r = 1, g = 0.1, b = 0.1 }
 
 -- Timers & Refresh Intervals
-local rtMenuInterval = 5
-local rtMenuEndtime = 0
 local refreshInterval = 1 / 60
 local nextRefresh = 0
 
@@ -21,8 +19,6 @@ local nextRefresh = 0
 local unitLimit = 15
 local maxUnits = 15
 local units = {}
-local raidTargets = {}
-local raidIcons, raidIconsN = { [1] = 'skull', [2] = 'moon', [3] = 'square', [4] = 'triangle', [5] = 'star', [6] = 'diamond', [7] = 'cross', [8] = 'circle' }, 8
 
 local enabled = false
 FOSTERFRAMES_DEBUG = false
@@ -82,9 +78,13 @@ fosterFrame.lockBtn.text:SetText(FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDA
 fosterFrame.lockBtn:SetScript('OnClick', function()
     if not FOSTERFRAMESPLAYERDATA then return end
     FOSTERFRAMESPLAYERDATA['frameMovable'] = not FOSTERFRAMESPLAYERDATA['frameMovable']
-    if showHideBars then showHideBars() end
+    local isMovable = FOSTERFRAMESPLAYERDATA['frameMovable']
+    this.text:SetText(isMovable and '-' or '+')
+    if fosterFrameDisplay.bg then
+        if isMovable then fosterFrameDisplay.bg:Show() else fosterFrameDisplay.bg:Hide() end
+    end
     if fosterFramesSettings and fosterFramesSettings.unlock then
-        fosterFramesSettings.unlock:SetText(FOSTERFRAMESPLAYERDATA['frameMovable'] and 'Lock' or 'Unlock')
+        fosterFramesSettings.unlock:SetText(isMovable and 'Lock' or 'Unlock')
     end
     PlaySound("igMainMenuOptionCheckBoxOn")
 end)
@@ -107,87 +107,6 @@ fosterFrame.totalPlayers:SetFont(STANDARD_TEXT_FONT, 12, 'OUTLINE')
 fosterFrame.totalPlayers:SetPoint('RIGHT', fosterFrame, 'RIGHT', -4, 1)
 fosterFrame.totalPlayers:Hide()
 
--- Raid Target Indicator Frame
-fosterFrame.raidTargetFrame = CreateFrame('Frame', nil, fosterFrame)
-fosterFrame.raidTargetFrame:SetFrameLevel(2)
-fosterFrame.raidTargetFrame:SetHeight(36)
-fosterFrame.raidTargetFrame:SetWidth(36)
-fosterFrame.raidTargetFrame:SetPoint('CENTER', UIParent, 'CENTER', 0, 160)
-fosterFrame.raidTargetFrame:Hide()
-
-fosterFrame.raidTargetFrame.text = fosterFrame.raidTargetFrame:CreateFontString(nil, 'OVERLAY')
-fosterFrame.raidTargetFrame.text:SetFont(STANDARD_TEXT_FONT, 18, 'OUTLINE')
-fosterFrame.raidTargetFrame.text:SetTextColor(0.8, 0.8, 0.8, 0.8)
-fosterFrame.raidTargetFrame.text:SetPoint('CENTER', fosterFrame.raidTargetFrame, 'CENTER', 0, 0)
-fosterFrame.raidTargetFrame.text:SetText('Player')
-
-fosterFrame.raidTargetFrame.iconl = fosterFrame.raidTargetFrame:CreateTexture(nil, 'OVERLAY')
-fosterFrame.raidTargetFrame.iconl:SetTexture([[Interface\TargetingFrame\UI-RaidTargetingIcons]])
-fosterFrame.raidTargetFrame.iconl:SetTexCoord(0.75, 1, 0.25, 0.5)
-fosterFrame.raidTargetFrame.iconl:SetHeight(36)
-fosterFrame.raidTargetFrame.iconl:SetWidth(36)
-fosterFrame.raidTargetFrame.iconl:SetPoint('RIGHT', fosterFrame.raidTargetFrame.text, 'LEFT', -6, 0)
-
-fosterFrame.raidTargetFrame.iconr = fosterFrame.raidTargetFrame:CreateTexture(nil, 'OVERLAY')
-fosterFrame.raidTargetFrame.iconr:SetTexture([[Interface\TargetingFrame\UI-RaidTargetingIcons]])
-fosterFrame.raidTargetFrame.iconr:SetTexCoord(0.75, 1, 0.25, 0.5)
-fosterFrame.raidTargetFrame.iconr:SetHeight(36)
-fosterFrame.raidTargetFrame.iconr:SetWidth(36)
-fosterFrame.raidTargetFrame.iconr:SetPoint('LEFT', fosterFrame.raidTargetFrame.text, 'RIGHT', 6, 0)
-
--- Raid Target Popup Menu
-local rtMenuIconsize = 26
-fosterFrame.raidTargetMenu = CreateFrame('Frame', nil, fosterFrame)
-fosterFrame.raidTargetMenu:SetFrameLevel(7)
-fosterFrame.raidTargetMenu:SetHeight(rtMenuIconsize * 2 + 4)
-fosterFrame.raidTargetMenu:SetWidth(rtMenuIconsize * 4 + 10)
-fosterFrame.raidTargetMenu:SetBackdrop(BACKDROP)
-fosterFrame.raidTargetMenu:SetBackdropColor(0, 0, 0, 0.6)
-fosterFrame.raidTargetMenu:Hide()
-fosterFrame.raidTargetMenu.border = CreateBorder(nil, fosterFrame.raidTargetMenu, 10)
-fosterFrame.raidTargetMenu.icons = {}
-
-for j = 1, raidIconsN do
-    local btn = CreateFrame('Button', 'fosterFrameRaidTargetMenuIcon' .. j, fosterFrame.raidTargetMenu)
-    btn:SetHeight(rtMenuIconsize)
-    btn:SetWidth(rtMenuIconsize)
-    if j == 1 then
-        btn:SetPoint('TOPLEFT', fosterFrame.raidTargetMenu, 'TOPLEFT', 1, -1)
-    elseif j < 5 then
-        btn:SetPoint('LEFT', fosterFrame.raidTargetMenu.icons[j - 1], 'RIGHT', 2, 0)
-    else
-        btn:SetPoint('TOP', fosterFrame.raidTargetMenu.icons[j - 4], 'BOTTOM', 0, -2)
-    end
-    btn.id = j
-    btn.tex = btn:CreateTexture(nil, 'OVERLAY')
-    btn.tex:SetTexture([[Interface\TargetingFrame\UI-RaidTargetingIcons]])
-    btn.tex:SetAlpha(0.6)
-    local tCoords = RAID_TARGET_TCOORDS[raidIcons[j]]
-    btn.tex:SetTexCoord(tCoords[1], tCoords[2], tCoords[3], tCoords[4])
-    btn.tex:SetAllPoints()
-    btn:SetScript('OnEnter', function() this.tex:SetAlpha(1) end)
-    btn:SetScript('OnLeave', function() this.tex:SetAlpha(0.6) end)
-    fosterFrame.raidTargetMenu.icons[j] = btn
-end
-
-local function spawnRTMenu(b, tar)
-    fosterFrame.raidTargetMenu:SetPoint('TOP', b, 'BOTTOM', rtMenuIconsize / 2, 0)
-    if fosterFrame.raidTargetMenu.target == tar and rtMenuEndtime > GetTime() then
-        fosterFrame.raidTargetMenu:Hide()
-        return
-    end
-    fosterFrame.raidTargetMenu.target = tar
-    fosterFrame.raidTargetMenu:Show()
-    rtMenuEndtime = GetTime() + rtMenuInterval
-    for j = 1, raidIconsN do
-        fosterFrame.raidTargetMenu.icons[j]:SetScript('OnClick', function()
-            FOSTERFRAMECORESendRaidTarget(raidIcons[this.id], tar)
-            fosterFrame.raidTargetMenu:Hide()
-            rtMenuEndtime = 0
-        end)
-    end
-end
-
 local unitWidth, unitHeight, hpWidth, hpHeight, manaBarHeight, iconSize, castBarHeight = UIElementsGetDimensions()
 local xGap = 6
 local yGap = 4
@@ -199,12 +118,9 @@ for i = 1, unitLimit do
     units[i].hoverEnabled = false
 
     units[i]:SetScript('OnClick', function(self, button)
-        local b = button or arg1
         local frame = self or this
-        if b == 'LeftButton' and frame.tar then
+        if frame.tar then
             TargetByName(frame.tar, true)
-        elseif b == 'RightButton' and frame.tar then
-            spawnRTMenu(frame, frame.tar)
         end
     end)
 
@@ -302,14 +218,6 @@ local function renderTestVisuals()
             else
                 units[i].targetCount.text:SetText("")
                 units[i].targetCount.text:Hide()
-            end
-
-            -- Raid Icon
-            if data.iconCoord then
-                units[i].raidTarget.icon:SetTexCoord(data.iconCoord[1], data.iconCoord[2], data.iconCoord[3], data.iconCoord[4])
-                units[i].raidTarget:Show()
-            else
-                units[i].raidTarget:Hide()
             end
 
             -- Cast Bar
@@ -618,19 +526,6 @@ local function updateUnits()
             units[i].cc.cd:Show()
         end
 
-        -- Raid Target
-        if v.name and raidTargets[v.name] then
-            local tCoords = RAID_TARGET_TCOORDS[raidTargets[v.name].icon]
-            if tCoords then
-                units[i].raidTarget.icon:SetTexCoord(tCoords[1], tCoords[2], tCoords[3], tCoords[4])
-                units[i].raidTarget:Show()
-            else
-                units[i].raidTarget:Hide()
-            end
-        else
-            units[i].raidTarget:Hide()
-        end
-
         if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayOnlyNearby'] and not v.nearby then
             units[i]:Hide()
         else
@@ -645,12 +540,12 @@ local function fosterFramesOnUpdate()
     nextRefresh = nextRefresh - (arg1 or 0.016)
     if nextRefresh <= 0 then
         if not FOSTERFRAMES_TESTMODE then
-            raidTargets = FOSTERFRAMECOREGetRaidTarget() or {}
             updateUnits()
         end
         nextRefresh = refreshInterval
     end
 end
+
 
 --- Global Entry Points ---
 

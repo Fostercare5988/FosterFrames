@@ -65,9 +65,17 @@
 - **Target Aura Timers:** Real-time remaining duration numbers and cooldown spiral models attached to target buffs and debuffs.
 - **Class & Talent Spec Icons:** Automatically detects active player talent specializations via `UnitSpec` / `UnitTalent` and updates frame portrait icons.
 
-### 3. Battleground Intelligence
+### 3. World PvP Radar ("Spy" Engine)
+- **Open World Hostile Scanning:** Automatically detects nearby enemy faction players outside battlegrounds using combat logs, nameplate queries, and GUID telemetry.
+- **Audio Warning Alarms:** Plays immediate master-channel warning alarms when an enemy player enters proximity.
+- **Taskbar Alerts:** Flashes Windows taskbar via UnitXP SP3 (`FlashClientIcon`) when an enemy is spotted while alt-tabbed.
+- **Stealth Action Watcher:** Instant combat log alerts when Rogues/Druids activate Stealth, Vanish, Prowl, or stealth openers.
+- **Party/Raid Telemetry Broadcasts:** Automatically transmits spotted enemy name, class, and level to group chat.
+
+### 4. Battleground Intelligence & Live Test Fixture
 - **Warsong Gulch EFC Assistant:** Real-time Enemy Flag Carrier tracking with live distance estimation, dynamic targeting button, and low health warning alerts (`/bg`).
 - **Arathi Basin Base Defense Alerts:** Automated base assault and defense broadcast system.
+- **Multi-Scenario Test Fixtures:** Live interactive preview switcher in settings (`Test: 10 (WSG)` and `Test: 15 (AB)`) with realistic simulated combat cards, live castbars, CC icons, and raid targets.
 - **Addon Communication Mesh:** Zero-garbage `CHAT_MSG_ADDON` binary synchronization over `FOSTERFRAMES` prefix for instant team-wide enemy raid target coordination.
 - **Raid Target Popup Menu:** Quick right-click radial menu on enemy unit frames to assign raid target icons (Skull, Cross, Square, Moon, etc.).
 

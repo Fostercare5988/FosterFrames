@@ -343,11 +343,12 @@ local function updatePlayerListInfo(now)
         -- Exact distance query via unitID, name, or guid (UnitXP SP3)
         local dist = (unitID and getExactDistance(unitID)) or getExactDistance(v.name) or (v.guid and getExactDistance(v.guid))
         if dist then
-            if v.distance ~= dist then
-                v.distance = dist
+            v.distance = dist
+            local isNearby = (dist <= 80)
+            if v.nearby ~= isNearby then
+                v.nearby = isNearby
                 refreshUnits = true
             end
-            v.nearby = (dist <= 80)
             v.nextCheck = nextCheck
         else
             if v.distance ~= 999 then
@@ -421,13 +422,40 @@ local function globalNearbyMaintenance(now)
     end
 end
 
+local CLASS_STABLE_SORT_ORDER = {
+    ['DRUID']   = 1,
+    ['HUNTER']  = 2,
+    ['MAGE']    = 3,
+    ['PALADIN'] = 4,
+    ['PRIEST']  = 5,
+    ['ROGUE']   = 6,
+    ['SHAMAN']  = 7,
+    ['WARLOCK'] = 8,
+    ['WARRIOR'] = 9,
+}
+
 local function orderUnitsforOutput()
     local list = {}
     for _, v in pairs(playerList) do
         table.insert(list, v)
     end
 
+    local currentZoneName = GetZoneText()
+    local isAV = (currentZoneName == 'Alterac Valley')
+
     table.sort(list, function(a, b)
+        -- In Alterac Valley (or AV / BattlegroundTargets mode):
+        -- Always sort strictly by Class Group then Alphabetical by Name.
+        -- This guarantees 100% rock-solid, static slots: ZERO jumping, zero shuffling!
+        if isAV or (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avMode'] and insideBG) then
+            local aOrder = CLASS_STABLE_SORT_ORDER[a.class] or 10
+            local bOrder = CLASS_STABLE_SORT_ORDER[b.class] or 10
+            if aOrder ~= bOrder then
+                return aOrder < bOrder
+            end
+            return (a.name or '') < (b.name or '')
+        end
+
         if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['smartDistanceSorting'] then
             local distA = a.distance or 999
             local distB = b.distance or 999
@@ -440,10 +468,10 @@ local function orderUnitsforOutput()
             return a.nearby
         end
 
-        local aClass = a.class or 'WARRIOR'
-        local bClass = b.class or 'WARRIOR'
-        if aClass ~= bClass then
-            return aClass < bClass
+        local aOrder = CLASS_STABLE_SORT_ORDER[a.class] or 10
+        local bOrder = CLASS_STABLE_SORT_ORDER[b.class] or 10
+        if aOrder ~= bOrder then
+            return aOrder < bOrder
         end
 
         return (a.name or '') < (b.name or '')
@@ -456,6 +484,7 @@ local function orderUnitsforOutput()
     end
     return result
 end
+
 
 local function resetTargetCount()
     for _, v in pairs(playerList) do

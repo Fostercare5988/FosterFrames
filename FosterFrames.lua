@@ -618,7 +618,21 @@ local function updateUnits()
             units[i].cc.cd:Show()
         end
 
-        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayOnlyNearby'] and not v.nearby then
+        -- Target count live update
+        local tarCount = v.targetcount or 0
+        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['targetCounter'] and tarCount > 0 then
+            units[i].targetCount.text:SetText(tarCount)
+            units[i].targetCount.text:Show()
+        else
+            units[i].targetCount.text:SetText("")
+            units[i].targetCount.text:Hide()
+        end
+
+        local currentZoneName = GetZoneText()
+        local isAV = (currentZoneName == 'Alterac Valley')
+        local hideFarInAV = isAV and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avShowOnlyNearby']
+
+        if ((FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayOnlyNearby']) or hideFarInAV) and not v.nearby then
             units[i]:Hide()
         else
             units[i]:Show()
@@ -627,6 +641,7 @@ local function updateUnits()
         i = i + 1
     end
 end
+
 
 local function fosterFramesOnUpdate()
     nextRefresh = nextRefresh - (arg1 or 0.016)

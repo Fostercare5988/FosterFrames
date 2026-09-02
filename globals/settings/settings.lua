@@ -25,7 +25,6 @@ if FOSTERFRAMESPLAYERDATA == nil then
         ['integratedTargetFrameCastbar'] = true,
         ['targetDebuffTimers']           = false,
         ['playerTargetCounter']          = false,
-        ['specSpecificIcons']            = true,
         ['ccAnnounce']                   = false,
         ['displayHealthValues']          = false,
         ['displayManaValues']            = false,
@@ -101,17 +100,12 @@ local TABS_CONFIG = {
                 tooltipText = 'Displays numeric countdown seconds and cooldown spirals directly on TargetFrame buff and debuff icons.'
             },
             {
-                id = 'specSpecificIcons',
-                label = 'Show Talent Spec Icons (instead of Class)',
-                tooltipTitle = 'Talent Spec Icons',
-                tooltipText = 'Queries SuperWoW UnitSpec and talent data to display specialization icons (e.g. Shadow, Arms, Frost) instead of standard class crests.'
-            },
-            {
                 id = 'ccAnnounce',
                 label = 'Announce CCs to Chat (/say, /bg)',
                 tooltipTitle = 'Crowd Control Alerts',
                 tooltipText = 'Automatically alerts your team in /say or /battleground when your character is afflicted by major crowd control (Sap, Blind, Polymorph, Fear).'
             },
+
         },
     },
     {

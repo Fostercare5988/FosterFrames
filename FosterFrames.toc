@@ -15,10 +15,8 @@ globals\wsgHandler.lua
 globals\abHandler.lua
 globals\commHandler.lua
 
-# CLASS TRACKING
-globals\class\classTracker.lua
-
 # UI TEMPLATES & ELEMENTS
+
 UIElements\customBorder.lua
 UIElements\customCooldown.lua
 UIElements\UIElementsTemplate.lua

@@ -106,7 +106,6 @@ end
 
 local iconFolders = {
     ['class'] = [[Interface\AddOns\FosterFrames\globals\resources\ClassIcons\ClassIcon_]],
-    ['spec']  = [[Interface\AddOns\FosterFrames\globals\resources\SpecIcons\]],
 }
 
 function GET_DEFAULT_ICON(op, value)
@@ -115,18 +114,6 @@ function GET_DEFAULT_ICON(op, value)
     return dir .. value
 end
 
-if not RAID_TARGET_TCOORDS then
-    RAID_TARGET_TCOORDS = {
-        ['star']     = { 0.00, 0.25, 0.00, 0.25 },
-        ['circle']   = { 0.25, 0.50, 0.00, 0.25 },
-        ['diamond']  = { 0.50, 0.75, 0.00, 0.25 },
-        ['triangle'] = { 0.75, 1.00, 0.00, 0.25 },
-        ['moon']     = { 0.00, 0.25, 0.25, 0.50 },
-        ['square']   = { 0.25, 0.50, 0.25, 0.50 },
-        ['cross']    = { 0.50, 0.75, 0.25, 0.50 },
-        ['skull']    = { 0.75, 1.00, 0.25, 0.50 },
-    }
-end
 
 if not SPELLINFO_WSG_FLAGS then
     SPELLINFO_WSG_FLAGS = {

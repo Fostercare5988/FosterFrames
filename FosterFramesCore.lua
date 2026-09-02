@@ -148,7 +148,6 @@ local function applyNearbyPlayer(v, now, nextCheck)
         if v.sex then p.sex = v.sex end
         if v.guid then p.guid = v.guid end
         if v.class then p.class = v.class end
-        if v.spec then p.spec = v.spec end
 
         if v.powerType then
             p.powerType = v.powerType
@@ -176,16 +175,6 @@ local function updateUnitDistance(p, unit)
     end
 end
 
-function FOSTERFRAMESGetUnitSpec(unit)
-    if not unit or unit == "" then return nil end
-    if UnitSpec then
-        local ok, spec = pcall(UnitSpec, unit)
-        if ok and spec then return spec end
-    end
-    return nil
-end
-
-
 local function verifyUnitInfo(unit, now)
     now = now or GetTime()
     if UnitExists(unit) and UnitIsPlayer(unit) and UnitFactionGroup(unit) ~= playerFaction then
@@ -195,7 +184,6 @@ local function verifyUnitInfo(unit, now)
         local power = UnitPowerType(unit)
         local powerType = (power == 3 and 'energy') or (power == 1 and 'rage') or 'mana'
         local guid = UnitGUID(unit) or name
-        local spec = FOSTERFRAMESGetUnitSpec(unit)
 
         local u = {
             name      = name,
@@ -206,7 +194,6 @@ local function verifyUnitInfo(unit, now)
             maxmana   = UnitManaMax(unit),
             powerType = powerType,
             guid      = guid,
-            spec      = spec,
             nearby    = true,
         }
 
@@ -215,14 +202,12 @@ local function verifyUnitInfo(unit, now)
         local p = playerList[name]
         if p then
             updateUnitDistance(p, unit)
-            if FOSTERFRAMESUpdateClassSpecialAuras then
-                FOSTERFRAMESUpdateClassSpecialAuras(p, unit)
-            end
             if p.fc and WSGUIupdateFChealth then
                 WSGUIupdateFChealth(unit)
             end
         end
         return true
+
     end
     return false
 end

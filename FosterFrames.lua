@@ -491,12 +491,8 @@ local function drawUnits(list)
             units[i].cc.icon:SetVertexColor(0.4, 0.4, 0.4, 1)
         end
 
-        local spec = FOSTERFRAMESGetUnitSpec(v.name)
-        if spec and spec.icon and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['specSpecificIcons'] then
-            units[i].cc.icon:SetTexture(spec.icon)
-        else
-            units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', class))
-        end
+        units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', class))
+
 
         units[i].tar = v.name
         units[i].guid = v.guid

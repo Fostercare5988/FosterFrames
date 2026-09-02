@@ -23,13 +23,18 @@ if FOSTERFRAMESPLAYERDATA == nil then
         ['integratedTargetFrameCastbar'] = true,
         ['targetDebuffTimers']           = false,
         ['playerTargetCounter']          = false,
-        ['openWorldScanning']            = true,
         ['specSpecificIcons']            = true,
-        ['smartDistanceSorting']         = false,
         ['ccAnnounce']                   = false,
         ['displayHealthValues']          = false,
         ['displayManaValues']            = false,
+        -- Spy Mode
+        ['openWorldScanning']            = true,
+        ['spySoundAlert']                = true,
+        ['spyFlashTaskbar']              = false,
+        ['spyStealthAlert']              = true,
+        ['spyAnnounceNearby']            = false,
         -- Battlegrounds
+        ['smartDistanceSorting']         = false,
         ['efcBGannouncement']            = true,
         ['efcDistanceTracking']          = true,
         -- Optionals
@@ -39,7 +44,7 @@ if FOSTERFRAMESPLAYERDATA == nil then
         ['castTimers']                   = false,
         ['targetCounter']                = false,
         ['offX']                         = 0,
-        ['offY']                         = 0,
+        ['offY']                         = 100,
     }
 end
 
@@ -103,15 +108,45 @@ local TABS_CONFIG = {
         },
     },
     {
-        name = 'Automation',
-        title = 'Automation & Battlegrounds',
+        name = 'Spy',
+        title = 'Spy & World PvP Detection',
         checkboxes = {
             {
                 id = 'openWorldScanning',
-                label = 'Scan Players in Open World (Non-BG)',
-                tooltipTitle = 'Open World PvP Scanning',
+                label = 'Scan Hostiles in Open World (Non-BG)',
+                tooltipTitle = 'Open World PvP Radar',
                 tooltipText = 'Enables nameplate and combat log scanning outside battlegrounds to detect, track, and display hostile players in world PvP.'
             },
+            {
+                id = 'spySoundAlert',
+                label = 'Play Warning Alarm on Enemy Detected',
+                tooltipTitle = 'Audio Warning Alarm',
+                tooltipText = 'Plays an immediate raid warning audio alarm through the Master audio channel when a new hostile enemy is spotted.'
+            },
+            {
+                id = 'spyFlashTaskbar',
+                label = 'Flash OS Taskbar on Enemy Detected',
+                tooltipTitle = 'OS Taskbar Flashing (UnitXP SP3)',
+                tooltipText = 'Flashes your Windows taskbar via UnitXP SP3 FlashClientIcon when an enemy is spotted while you are alt-tabbed.'
+            },
+            {
+                id = 'spyStealthAlert',
+                label = 'Stealth Detection Warnings (Rogue/Druid)',
+                tooltipTitle = 'Stealth Action Watcher',
+                tooltipText = 'Watches combat logs and displays instant alerts when hostiles activate Stealth, Prowl, Vanish, or stealth openers.'
+            },
+            {
+                id = 'spyAnnounceNearby',
+                label = 'Broadcast Detected Hostiles to Party/Raid',
+                tooltipTitle = 'Group Hostile Broadcast',
+                tooltipText = 'Automatically sends a party or raid chat alert containing the enemy player\'s name and class when spotted.'
+            },
+        },
+    },
+    {
+        name = 'Automation',
+        title = 'Automation & Battlegrounds',
+        checkboxes = {
             {
                 id = 'smartDistanceSorting',
                 label = 'Sort Frames by Distance (Closest first)',
@@ -181,7 +216,7 @@ local TABS_CONFIG = {
 
 local settings = CreateFrame('Frame', 'fosterFramesSettings', UIParent)
 settings:ClearAllPoints()
-settings:SetWidth(460)
+settings:SetWidth(470)
 settings:SetHeight(380)
 settings:SetFrameLevel(60)
 settings:SetPoint('CENTER', UIParent, 0, 0)
@@ -221,7 +256,7 @@ settings.x:SetPoint('TOPRIGHT', -6, -6)
 
 -- Sidebar
 settings.sidebar = CreateFrame('Frame', nil, settings)
-settings.sidebar:SetWidth(104)
+settings.sidebar:SetWidth(108)
 settings.sidebar:SetPoint('TOPLEFT', settings, 'TOPLEFT', 11, -40)
 settings.sidebar:SetPoint('BOTTOMLEFT', settings, 'BOTTOMLEFT', 11, 11)
 settings.sidebar:SetBackdrop({ bgFile = [[Interface\Tooltips\UI-Tooltip-Background]] })
@@ -315,6 +350,9 @@ local function CreateTabContainers()
             _G[scaleSlider:GetName() .. 'High']:SetText('1.5')
             _G[scaleSlider:GetName() .. 'Text']:SetText('')
 
+            scaleSlider.ttTitle = tabData.scaleTitle or 'Frame Scale'
+            scaleSlider.ttText = tabData.scaleTooltip
+
             scaleSlider:SetScript('OnValueChanged', function()
                 local val = FosterFrames.Helpers.Round(this:GetValue(), 2)
                 FOSTERFRAMESPLAYERDATA['scale'] = val
@@ -324,7 +362,7 @@ local function CreateTabContainers()
             end)
 
             scaleSlider:SetScript('OnEnter', function()
-                ShowTooltip(this, tabData.scaleTitle or 'Frame Scale', tabData.scaleTooltip)
+                ShowTooltip(this, this.ttTitle, this.ttText)
             end)
             scaleSlider:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
@@ -348,6 +386,9 @@ local function CreateTabContainers()
             _G[layoutSlider:GetName() .. 'High']:SetText('Vertical')
             _G[layoutSlider:GetName() .. 'Text']:SetText('')
 
+            layoutSlider.ttTitle = tabData.layoutTitle or 'Layout Mode'
+            layoutSlider.ttText = tabData.layoutTooltip
+
             layoutSlider:SetScript('OnValueChanged', function()
                 local v = this:GetValue()
                 local layoutMap = { [0] = 'horizontal', [1] = 'hblock', [2] = 'block', [3] = 'vblock', [4] = 'vertical' }
@@ -358,7 +399,7 @@ local function CreateTabContainers()
             end)
 
             layoutSlider:SetScript('OnEnter', function()
-                ShowTooltip(this, tabData.layoutTitle or 'Layout Mode', tabData.layoutTooltip)
+                ShowTooltip(this, this.ttTitle, this.ttText)
             end)
             layoutSlider:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
@@ -377,10 +418,10 @@ local function RefreshSettingsUI()
         containers[1].scaleSlider:SetValue(FOSTERFRAMESPLAYERDATA['scale'] or 1.0)
     end
 
-    if containers[4] and containers[4].layoutSlider then
+    if containers[5] and containers[5].layoutSlider then
         local layout = FOSTERFRAMESPLAYERDATA['layout'] or 'block'
         local val = (layout == 'horizontal' and 0) or (layout == 'hblock' and 1) or (layout == 'block' and 2) or (layout == 'vblock' and 3) or 4
-        containers[4].layoutSlider:SetValue(val)
+        containers[5].layoutSlider:SetValue(val)
     end
 end
 
@@ -388,10 +429,10 @@ end
 settings.tabs = {}
 for i, tabData in ipairs(TABS_CONFIG) do
     local btn = CreateFrame('Button', 'fosterFramesTabBtn' .. i, settings.sidebar, 'UIPanelButtonTemplate')
-    btn:SetWidth(94)
-    btn:SetHeight(24)
+    btn:SetWidth(98)
+    btn:SetHeight(23)
     btn:SetText(tabData.name)
-    btn:SetPoint('TOP', settings.sidebar, 'TOP', 0, -10 - (i - 1) * 28)
+    btn:SetPoint('TOP', settings.sidebar, 'TOP', 0, -8 - (i - 1) * 26)
     btn.tabIdx = i
 
     btn:SetScript('OnClick', function()
@@ -402,32 +443,39 @@ for i, tabData in ipairs(TABS_CONFIG) do
     settings.tabs[i] = btn
 end
 
--- Test Mode Button (Live Preview)
+-- Test Mode Button (Live Preview Cycler: 10 -> 15 -> OFF)
 settings.testBtn = CreateFrame('Button', 'fosterFramesSettingsTestButton', settings.sidebar, 'UIPanelButtonTemplate')
-settings.testBtn:SetWidth(94)
-settings.testBtn:SetHeight(24)
+settings.testBtn:SetWidth(98)
+settings.testBtn:SetHeight(23)
 settings.testBtn:SetPoint('BOTTOM', settings.sidebar, 'BOTTOM', 0, 68)
-settings.testBtn:SetText('Test Mode')
+settings.testBtn:SetText('Test: 10')
+settings.testBtn.ttTitle = 'Live Preview Scenarios'
+settings.testBtn.ttText = 'Cycles live preview test scenarios:\n• Test: 10 (Warsong Gulch & Arena 10v10)\n• Test: 15 (Arathi Basin 15v15)\n• Test: OFF (Disable preview)'
 settings.testBtn:SetScript('OnClick', function()
-    local nextState = not FOSTERFRAMES_TESTMODE
-    FOSTERFRAMES_SetTestMode(nextState)
-    if nextState then
-        this:SetText('Test: ON')
+    if not FOSTERFRAMES_TESTMODE then
+        FOSTERFRAMES_SetTestMode(true, 10)
+        this:SetText('Test: 10 (WSG)')
+    elseif FOSTERFRAMES_GetTestCount and FOSTERFRAMES_GetTestCount() == 10 then
+        FOSTERFRAMES_SetTestMode(true, 15)
+        this:SetText('Test: 15 (AB)')
     else
+        FOSTERFRAMES_SetTestMode(false)
         this:SetText('Test: OFF')
     end
 end)
 settings.testBtn:SetScript('OnEnter', function()
-    ShowTooltip(this, 'Live Preview Mode', 'Populates realistic dummy enemy frames with active health/mana bars, castbars, debuffs, and raid targets to preview your settings in real-time.')
+    ShowTooltip(this, this.ttTitle, this.ttText)
 end)
 settings.testBtn:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
 -- Unlock/Lock Position Button
 settings.unlock = CreateFrame('Button', 'fosterFramesSettingsUnlockButton', settings.sidebar, 'UIPanelButtonTemplate')
-settings.unlock:SetWidth(94)
-settings.unlock:SetHeight(24)
+settings.unlock:SetWidth(98)
+settings.unlock:SetHeight(23)
 settings.unlock:SetPoint('BOTTOM', settings.sidebar, 'BOTTOM', 0, 39)
 settings.unlock:SetText(FOSTERFRAMESPLAYERDATA['frameMovable'] and 'Lock' or 'Unlock')
+settings.unlock.ttTitle = 'Lock / Unlock Frames'
+settings.unlock.ttText = 'When unlocked, enables dragging the FosterFrames container across your screen with the mouse.'
 settings.unlock:SetScript('OnClick', function()
     FOSTERFRAMESPLAYERDATA['frameMovable'] = not FOSTERFRAMESPLAYERDATA['frameMovable']
     this:SetText(FOSTERFRAMESPLAYERDATA['frameMovable'] and 'Lock' or 'Unlock')
@@ -437,16 +485,18 @@ settings.unlock:SetScript('OnClick', function()
     if FOSTERFRAMESsettings then FOSTERFRAMESsettings() end
 end)
 settings.unlock:SetScript('OnEnter', function()
-    ShowTooltip(this, 'Lock / Unlock Frames', 'When unlocked, enables dragging the FosterFrames container across your screen with the mouse.')
+    ShowTooltip(this, this.ttTitle, this.ttText)
 end)
 settings.unlock:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
 -- Reset Position Button
 settings.reset = CreateFrame('Button', 'fosterFramesSettingsResetButton', settings.sidebar, 'UIPanelButtonTemplate')
-settings.reset:SetWidth(94)
-settings.reset:SetHeight(24)
+settings.reset:SetWidth(98)
+settings.reset:SetHeight(23)
 settings.reset:SetPoint('BOTTOM', settings.sidebar, 'BOTTOM', 0, 10)
 settings.reset:SetText('Reset Pos')
+settings.reset.ttTitle = 'Reset Position'
+settings.reset.ttText = 'Resets the frame grid location to the default screen center.'
 settings.reset:SetScript('OnClick', function()
     if fosterFrameDisplay then
         fosterFrameDisplay:ClearAllPoints()
@@ -456,7 +506,7 @@ settings.reset:SetScript('OnClick', function()
     FOSTERFRAMESPLAYERDATA['offY'] = 100
 end)
 settings.reset:SetScript('OnEnter', function()
-    ShowTooltip(this, 'Reset Position', 'Resets the frame grid location to the default screen center.')
+    ShowTooltip(this, this.ttTitle, this.ttText)
 end)
 settings.reset:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
@@ -473,11 +523,10 @@ local function setupSettings()
 
     settings:Show()
     settings.unlock:SetText(FOSTERFRAMESPLAYERDATA['frameMovable'] and 'Lock' or 'Unlock')
-    settings.testBtn:SetText(FOSTERFRAMES_TESTMODE and 'Test: ON' or 'Test: OFF')
 
     -- Automatically activate test preview when opening settings for immediate visual feedback
-    FOSTERFRAMES_SetTestMode(true)
-    settings.testBtn:SetText('Test: ON')
+    FOSTERFRAMES_SetTestMode(true, 10)
+    settings.testBtn:SetText('Test: 10 (WSG)')
 
     if FOSTERFRAMESsettings then FOSTERFRAMESsettings() end
     if TARGETFRAMECASTBARsettings then TARGETFRAMECASTBARsettings(true) end
@@ -526,9 +575,11 @@ SLASH_FOSTERFRAMES1 = '/ff'
 SLASH_FOSTERFRAMES2 = '/fosterframes'
 SLASH_FOSTERFRAMES3 = '/ffs'
 SlashCmdList["FOSTERFRAMES"] = function(msg)
-    if msg == 'debug' or msg == 'cd' or msg == 'test' then
-        FOSTERFRAMES_SetTestMode(not FOSTERFRAMES_TESTMODE)
-    elseif msg == 'hide' then
+    if msg == '15' or msg == 'ab' then
+        FOSTERFRAMES_SetTestMode(true, 15)
+    elseif msg == '10' or msg == 'wsg' or msg == 'debug' or msg == 'test' then
+        FOSTERFRAMES_SetTestMode(true, 10)
+    elseif msg == 'hide' or msg == 'off' then
         FOSTERFRAMES_HideFrames()
     elseif msg == 'data' then
         FOSTERFRAMES_DebugDisplayPlayerData()

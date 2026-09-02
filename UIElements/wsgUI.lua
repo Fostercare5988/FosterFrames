@@ -120,9 +120,12 @@ local function efcLowHealth()
 end
 
 local function getPerc(unit)
-    local curHP = UnitXP("health", unit) or UnitHealth(unit) or 0
-    local maxHP = UnitXP("maxhealth", unit) or UnitHealthMax(unit) or 1
-    if maxHP <= 0 then maxHP = 1 end
+    local curHP, maxHP
+    local ok, res = pcall(UnitXP, "health", unit)
+    if ok and type(res) == "number" then curHP = res else curHP = UnitHealth(unit) or 0 end
+    local ok2, res2 = pcall(UnitXP, "maxhealth", unit)
+    if ok2 and type(res2) == "number" then maxHP = res2 else maxHP = UnitHealthMax(unit) or 100 end
+    if not maxHP or maxHP <= 0 then maxHP = 100 end
     return FosterFrames.Helpers.Round((curHP * 100) / maxHP, 1)
 end
 

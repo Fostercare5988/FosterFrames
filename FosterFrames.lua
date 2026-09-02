@@ -150,8 +150,9 @@ local function spawnRTMenu(b, tar)
     end
 end
 
-local unitWidth, unitHeight, castBarHeight, ccIconWidth, manaBarHeight = UIElementsGetDimensions()
-local leftSpacing = 5
+local unitWidth, unitHeight, hpWidth, hpHeight, manaBarHeight, iconSize, castBarHeight = UIElementsGetDimensions()
+local xGap = 6
+local yGap = 4
 
 -- Create Unit Frames
 for i = 1, unitLimit do
@@ -191,7 +192,7 @@ for i = 1, unitLimit do
     end)
 end
 
--- Mock Test Data Definition
+-- Mock Test Data Definition (15 Units for WSG and AB testing)
 local TEST_UNITS = {
     { name = "Gladiator", class = "WARRIOR", powerType = "rage",   hp = 4850, maxHp = 5200, mana = 65,   maxMana = 100, spell = "Mortal Strike", icon = [[Interface\Icons\Ability_Warrior_SavageBlow]],   cast = 0,   castMax = 0,   tarCount = 3, iconCoord = {0.75, 1, 0.25, 0.5} },
     { name = "HolyHeals", class = "PRIEST",  powerType = "mana",   hp = 3120, maxHp = 4100, mana = 2800, maxMana = 4900, spell = "Greater Heal",  icon = [[Interface\Icons\Spell_Holy_GreaterHeal]],       cast = 1.4, castMax = 2.5, tarCount = 2, iconCoord = nil },
@@ -203,12 +204,18 @@ local TEST_UNITS = {
     { name = "Thunder",   class = "SHAMAN",  powerType = "mana",   hp = 3900, maxHp = 4700, mana = 2200, maxMana = 4400, spell = "Chain Lightning", icon = [[Interface\Icons\Spell_Nature_ChainLightning]],  cast = 1.2, castMax = 2.0, tarCount = 1, iconCoord = nil },
     { name = "Avenger",   class = "PALADIN", powerType = "mana",   hp = 4200, maxHp = 5100, mana = 2500, maxMana = 4600, spell = "Holy Light",      icon = [[Interface\Icons\Spell_Holy_HolyBolt]],          cast = 1.6, castMax = 2.5, tarCount = 0, iconCoord = nil },
     { name = "Bladestorm",class = "WARRIOR", powerType = "rage",   hp = 2200, maxHp = 5400, mana = 25,   maxMana = 100,  spell = nil,             icon = nil,                                              cast = 0,   castMax = 0,   tarCount = 4, iconCoord = {0, 0.25, 0, 0.25} },
+    { name = "ShadowPri", class = "PRIEST",  powerType = "mana",   hp = 3300, maxHp = 4200, mana = 3100, maxMana = 4800, spell = "Mind Blast",    icon = [[Interface\Icons\Spell_Shadow_UnholyFrenzy]],    cast = 0.9, castMax = 1.5, tarCount = 1, iconCoord = nil },
+    { name = "FireMage",  class = "MAGE",    powerType = "mana",   hp = 2700, maxHp = 3600, mana = 2900, maxMana = 5200, spell = "Pyroblast",     icon = [[Interface\Icons\Spell_Fire_Fireball02]],        cast = 2.4, castMax = 3.5, tarCount = 0, iconCoord = nil },
+    { name = "SubRogue",  class = "ROGUE",   powerType = "energy", hp = 3600, maxHp = 4500, mana = 100,  maxMana = 100,  spell = nil,             icon = nil,                                              cast = 0,   castMax = 0,   tarCount = 0, iconCoord = nil },
+    { name = "BeastHunt", class = "HUNTER",  powerType = "mana",   hp = 3800, maxHp = 4600, mana = 1600, maxMana = 3600, spell = "Multi-Shot",     icon = [[Interface\Icons\Ability_UpgradeMoonGlaive]],    cast = 0,   castMax = 0,   tarCount = 0, iconCoord = nil },
+    { name = "AffLock",   class = "WARLOCK", powerType = "mana",   hp = 3950, maxHp = 4900, mana = 3200, maxMana = 5000, spell = "Shadow Bolt",    icon = [[Interface\Icons\Spell_Shadow_ShadowBolt]],      cast = 1.7, castMax = 2.5, tarCount = 2, iconCoord = nil },
 }
 
+local testUnitCount = 10
+
 local function renderTestVisuals()
-    local count = #TEST_UNITS
     for i = 1, unitLimit do
-        if i <= count then
+        if i <= testUnitCount and i <= #TEST_UNITS then
             local data = TEST_UNITS[i]
             local clr = RAID_CLASS_COLORS[data.class] or RAID_CLASS_COLORS['WARRIOR']
             local pClr = RGB_POWER_COLORS[data.powerType] or RGB_POWER_COLORS['mana']
@@ -303,10 +310,10 @@ local function optionals()
         end
 
         if not FOSTERFRAMESPLAYERDATA['displayManabar'] then
-            units[i].hpbar:SetHeight(unitHeight)
+            units[i].hpbar:SetHeight(hpHeight + manaBarHeight)
             units[i].manabar:Hide()
         else
-            units[i].hpbar:SetHeight(unitHeight - manaBarHeight)
+            units[i].hpbar:SetHeight(hpHeight)
             units[i].manabar:Show()
         end
 
@@ -326,8 +333,25 @@ end
 
 local function arrangeUnits()
     if not FOSTERFRAMESPLAYERDATA then return end
-    local unitGroup = FOSTERFRAMESPLAYERDATA['groupsize'] or 5
     local layout = FOSTERFRAMESPLAYERDATA['layout'] or 'block'
+    local activeUnits = FOSTERFRAMES_TESTMODE and testUnitCount or maxUnits
+    if activeUnits < 1 then activeUnits = 1 end
+
+    local numCols = 1
+    if layout == 'horizontal' then
+        numCols = activeUnits
+    elseif layout == 'hblock' then
+        numCols = math.min(5, activeUnits)
+    elseif layout == 'vblock' then
+        numCols = 2
+    elseif layout == 'vertical' then
+        numCols = 1
+    else -- 'block' default: 5 units per column
+        numCols = math.ceil(activeUnits / 5)
+    end
+    if numCols < 1 then numCols = 1 end
+
+    fosterFrameDisplay:SetWidth(numCols * unitWidth + (numCols - 1) * xGap)
 
     if playerFaction == 'Alliance' then
         fosterFrameDisplay.Title:SetText(layout == 'vertical' and 'H ' or 'Horde')
@@ -337,23 +361,28 @@ local function arrangeUnits()
 
     for i = 1, unitLimit do
         units[i]:ClearAllPoints()
-        if i == 1 then
-            units[i]:SetPoint('TOPLEFT', fosterFrameDisplay, 'BOTTOMLEFT', 0, -4)
-        else
-            if i > unitGroup then
-                if layout == 'hblock' or layout == 'vblock' then
-                    units[i]:SetPoint('TOPLEFT', units[i - unitGroup].ffCastbar.iconborder, 'BOTTOMLEFT', 1, -5)
-                else
-                    units[i]:SetPoint('TOPLEFT', units[i - unitGroup].cc, 'TOPRIGHT', leftSpacing, 0)
-                end
-            else
-                if layout == 'hblock' or layout == 'vblock' then
-                    units[i]:SetPoint('TOPLEFT', units[i - 1].cc, 'TOPRIGHT', leftSpacing, 0)
-                else
-                    units[i]:SetPoint('TOPLEFT', units[i - 1].ffCastbar.iconborder, 'BOTTOMLEFT', 1, -5)
-                end
-            end
+        local col, row = 0, 0
+
+        if layout == 'horizontal' then
+            col = i - 1
+            row = 0
+        elseif layout == 'hblock' then
+            col = (i - 1) % 5
+            row = math.floor((i - 1) / 5)
+        elseif layout == 'vblock' then
+            col = (i - 1) % 2
+            row = math.floor((i - 1) / 2)
+        elseif layout == 'vertical' then
+            col = 0
+            row = i - 1
+        else -- 'block'
+            col = math.floor((i - 1) / 5)
+            row = (i - 1) % 5
         end
+
+        local xOfs = col * (unitWidth + xGap)
+        local yOfs = -4 - row * (unitHeight + yGap)
+        units[i]:SetPoint('TOPLEFT', fosterFrameDisplay, 'BOTTOMLEFT', xOfs, yOfs)
     end
 end
 
@@ -383,15 +412,6 @@ local function SetupFrames(maxU)
 
     fosterFrameDisplay.Title:SetTextColor(enemyFactionColor.r, enemyFactionColor.g, enemyFactionColor.b, 0.9)
     fosterFrameDisplay.totalPlayers:SetTextColor(enemyFactionColor.r, enemyFactionColor.g, enemyFactionColor.b, 0.9)
-
-    local layout = FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['layout'] or 'block'
-    local groupSize = FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['groupsize'] or 5
-    if groupSize < 1 then groupSize = 5 end
-
-    local col = (layout == 'hblock' and 5) or (layout == 'vblock' and 2) or (layout == 'vertical' and 1) or math.floor(maxUnits / groupSize)
-    if col < 1 then col = 1 end
-
-    fosterFrameDisplay:SetWidth((unitWidth + ccIconWidth + 5) * col + leftSpacing * (col - 1))
 
     showHideBars()
 
@@ -620,7 +640,7 @@ end
 function FOSTERFRAMESsettings()
     optionals()
     if FOSTERFRAMES_TESTMODE or not enabled or (not insideBG and (fosterFramesSettings and fosterFramesSettings:IsShown())) then
-        SetupFrames(10)
+        SetupFrames(testUnitCount)
         renderTestVisuals()
     else
         SetupFrames(maxUnits)
@@ -637,10 +657,15 @@ function FOSTERFRAMESsettings()
     end
 end
 
-function FOSTERFRAMES_SetTestMode(enable)
+function FOSTERFRAMES_SetTestMode(enable, count)
+    if type(enable) == "number" then
+        count = enable
+        enable = true
+    end
+    testUnitCount = count or testUnitCount or 10
     FOSTERFRAMES_TESTMODE = enable and true or false
     if FOSTERFRAMES_TESTMODE then
-        SetupFrames(10)
+        SetupFrames(testUnitCount)
         arrangeUnits()
         optionals()
         renderTestVisuals()
@@ -653,6 +678,10 @@ function FOSTERFRAMES_SetTestMode(enable)
             FOSTERFRAMESsettings()
         end
     end
+end
+
+function FOSTERFRAMES_GetTestCount()
+    return testUnitCount
 end
 
 -- Debug Utilities
@@ -668,7 +697,7 @@ function FOSTERFRAMES_DebugDisplayPlayerData()
 end
 
 function FOSTERFRAMES_DebugCooldownTest()
-    FOSTERFRAMES_SetTestMode(true)
+    FOSTERFRAMES_SetTestMode(true, 15)
 end
 
 function FOSTERFRAMES_HideFrames()
@@ -677,5 +706,6 @@ function FOSTERFRAMES_HideFrames()
     for i = 1, unitLimit do units[i]:Hide() end
     if fosterFrameDisplay then fosterFrameDisplay:Hide() end
 end
+
 
 

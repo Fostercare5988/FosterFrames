@@ -60,8 +60,8 @@ local f = CreateFrame('Frame', 'fosterFramesCore', UIParent)
 -- Helper: Query exact distance via UnitXP SP3
 local function getExactDistance(unit)
     if not unit or not UnitExists(unit) then return nil end
-    local d = UnitXP("distance", unit)
-    if d and d > 0 and d < 9999 then
+    local ok, d = pcall(UnitXP, "distance", unit)
+    if ok and type(d) == "number" and d > 0 and d < 9999 then
         return FosterFrames.Helpers.Round(d, 0)
     end
     return nil
@@ -70,9 +70,42 @@ end
 -- Helper: Query exact health via UnitXP SP3
 local function getExactHealth(unit)
     if not unit or not UnitExists(unit) then return 100, 100 end
-    local h = UnitXP("health", unit) or UnitHealth(unit) or 100
-    local mh = UnitXP("maxhealth", unit) or UnitHealthMax(unit) or 100
+    local ok, h, mh
+    ok, h = pcall(UnitXP, "health", unit)
+    if not (ok and type(h) == "number") then h = UnitHealth(unit) or 100 end
+    ok, mh = pcall(UnitXP, "maxhealth", unit)
+    if not (ok and type(mh) == "number") then mh = UnitHealthMax(unit) or 100 end
     return h, mh
+end
+
+-- Helper: Trigger Spy Alerts for new hostile players
+local function triggerSpyAlerts(name, class)
+    if not FOSTERFRAMESPLAYERDATA or not FOSTERFRAMESPLAYERDATA['openWorldScanning'] then return end
+    if insideBG then return end
+
+    if FOSTERFRAMESPLAYERDATA['spySoundAlert'] then
+        PlaySound("RaidWarning")
+    end
+
+    if FOSTERFRAMESPLAYERDATA['spyFlashTaskbar'] then
+        if FlashClientIcon then
+            FlashClientIcon()
+        else
+            pcall(UnitXP, "notify", "taskbarIcon")
+        end
+    end
+
+    local clr = RAID_CLASS_COLORS[class] or { r = 1, g = 0.2, b = 0.2 }
+    DEFAULT_CHAT_FRAME:AddMessage(string.format("|cffae7cee[Spy]|r Hostile detected: |cff%02x%02x%02x%s|r (%s)", clr.r * 255, clr.g * 255, clr.b * 255, name or "Unknown", class or "Unknown"))
+
+    if FOSTERFRAMESPLAYERDATA['spyAnnounceNearby'] then
+        local msg = "[FosterFrames Spy] Hostile nearby: " .. (name or "Unknown") .. " (" .. (class or "Unknown") .. ")"
+        if GetNumRaidMembers() > 0 then
+            SendChatMessage(msg, "RAID")
+        elseif GetNumPartyMembers() > 0 then
+            SendChatMessage(msg, "PARTY")
+        end
+    end
 end
 
 -- Apply / update hostile nearby player
@@ -80,9 +113,13 @@ local function applyNearbyPlayer(v, now, nextCheck)
     local id = v.name
     if not id then return end
 
-    if playerList[id] == nil then
+    local isNew = (playerList[id] == nil)
+    if isNew then
         playerList[id] = v
         refreshUnits = true
+        if not insideBG then
+            triggerSpyAlerts(v.name, v.class)
+        end
     end
 
     local p = playerList[id]

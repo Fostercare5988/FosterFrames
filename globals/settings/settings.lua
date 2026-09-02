@@ -11,7 +11,7 @@ FOSTERFRAMESVERSION = "1.0.0"
 -- Initialize SavedVariables with defaults
 if FOSTERFRAMESPLAYERDATA == nil then
     FOSTERFRAMESPLAYERDATA = {
-        -- Options
+        -- Display & Layout
         ['scale']                        = 1,
         ['unitWidth']                    = 126,
         ['unitHeight']                   = 24,
@@ -19,23 +19,13 @@ if FOSTERFRAMESPLAYERDATA == nil then
         ['layout']                       = 'block',
         ['frameMovable']                 = true,
         ['enableFrames']                 = true,
-        -- Features
-        ['mouseOver']                    = false,
-        ['targetFrameCastbar']           = true,
-        ['integratedTargetFrameCastbar'] = true,
-        ['targetDebuffTimers']           = false,
-        ['playerTargetCounter']          = false,
-        ['ccAnnounce']                   = false,
+        ['displayNames']                 = true,
         ['displayHealthValues']          = false,
+        ['displayManabar']               = false,
         ['displayManaValues']            = false,
-        -- Spy Mode
-        ['openWorldScanning']            = true,
-        ['showDistance']                 = true,
-        ['spySoundAlert']                = true,
-        ['spyFlashTaskbar']              = false,
-        ['spyStealthAlert']              = true,
-        ['spyAnnounceNearby']            = false,
-        -- Battlegrounds
+        ['displayOnlyNearby']            = false,
+        
+        -- Battlegrounds Suite
         ['avMode']                       = true,
         ['avShowOnlyNearby']             = false,
         ['avUnitWidth']                  = 112,
@@ -44,12 +34,26 @@ if FOSTERFRAMESPLAYERDATA == nil then
         ['smartDistanceSorting']         = false,
         ['efcBGannouncement']            = true,
         ['efcDistanceTracking']          = true,
-        -- Optionals
-        ['displayNames']                 = true,
-        ['displayManabar']               = false,
-        ['displayOnlyNearby']            = false,
-        ['castTimers']                   = false,
+
+        -- Spy & Open World Radar
+        ['openWorldScanning']            = true,
+        ['showDistance']                 = true,
+        ['spySoundAlert']                = true,
+        ['spyFlashTaskbar']              = false,
+        ['spyStealthAlert']              = true,
+        ['spyAnnounceNearby']            = false,
+
+        -- Target Frame & Combat HUD
+        ['integratedTargetFrameCastbar'] = true,
+        ['targetFrameCastbar']           = true,
+        ['targetDebuffTimers']           = false,
+        ['playerTargetCounter']          = false,
         ['targetCounter']                = false,
+        ['castTimers']                   = false,
+        ['ccAnnounce']                   = false,
+        ['mouseOver']                    = false,
+
+        -- Positioning
         ['offX']                         = 0,
         ['offY']                         = 100,
     }
@@ -58,156 +62,32 @@ end
 -- Configuration Tabs & Technical Tooltip Metadata
 local TABS_CONFIG = {
     {
-        name = 'General',
-        title = 'General Settings',
+        name = 'Display',
+        title = 'Display & Frame Layout',
         checkboxes = {
             {
                 id = 'enableFrames',
-                label = 'Enable Addon (Show Frames)',
+                label = 'Enable FosterFrames Unit Grid',
                 tooltipTitle = 'Enable FosterFrames',
                 tooltipText = 'Master toggle to display enemy unit frame cards and tactical combat HUD elements.'
             },
-        },
-        hasScale = true,
-        scaleTitle = 'Global Frame Scale',
-        scaleTooltip = 'Scales the overall size and dimension of the FosterFrames unit grid between 0.8x and 1.5x.'
-    },
-    {
-        name = 'Tactical',
-        title = 'Tactical Features',
-        checkboxes = {
-            {
-                id = 'mouseOver',
-                label = 'Enable Mouseover Cast (on Frames)',
-                tooltipTitle = 'Mouseover Spellcasting',
-                tooltipText = 'Allows casting spells directly onto unit frame cards via mouseover bindings without dropping your current target.'
-            },
-            {
-                id = 'targetFrameCastbar',
-                label = 'Movable Casting Bar for Target',
-                tooltipTitle = 'Movable Target Castbar',
-                tooltipText = 'Renders an independent, movable castbar beneath your TargetFrame with spell icon, duration, and latency spark.'
-            },
-            {
-                id = 'integratedTargetFrameCastbar',
-                label = 'Compact Casting Bar (inside Name)',
-                tooltipTitle = 'Embedded Nameplate Castbar',
-                tooltipText = 'Embeds a sleek casting progress bar directly inside the default Blizzard TargetFrame nameplate background.'
-            },
-            {
-                id = 'targetDebuffTimers',
-                label = 'Show Timer Text on Target Debuffs',
-                tooltipTitle = 'Target Debuff Timers',
-                tooltipText = 'Displays numeric countdown seconds and cooldown spirals directly on TargetFrame buff and debuff icons.'
-            },
-            {
-                id = 'ccAnnounce',
-                label = 'Announce CCs to Chat (/say, /bg)',
-                tooltipTitle = 'Crowd Control Alerts',
-                tooltipText = 'Automatically alerts your team in /say or /battleground when your character is afflicted by major crowd control (Sap, Blind, Polymorph, Fear).'
-            },
-
-        },
-    },
-    {
-        name = 'Spy',
-        title = 'Spy & World PvP Detection',
-        checkboxes = {
-            {
-                id = 'openWorldScanning',
-                label = 'Scan Hostiles in Open World (Non-BG)',
-                tooltipTitle = 'Open World PvP Radar',
-                tooltipText = 'Enables nameplate and combat log scanning outside battlegrounds to detect, track, and display hostile players in world PvP.'
-            },
-            {
-                id = 'showDistance',
-                label = 'Show Live 3D Yard Distance on Enemy Frames',
-                tooltipTitle = 'Live 3D Distance Tracker',
-                tooltipText = 'Calculates real-time 3D Euclidean distance (in yards) to detected hostiles via SuperWoW UnitPosition, displaying color-coded yard tags directly on each enemy frame (Red <10yd, Yellow 10-30yd, Green >30yd).'
-            },
-            {
-                id = 'spySoundAlert',
-                label = 'Play Warning Alarm on Enemy Detected',
-                tooltipTitle = 'Audio Warning Alarm',
-                tooltipText = 'Plays an immediate raid warning audio alarm through the Master audio channel when a new hostile enemy is spotted.'
-            },
-            {
-                id = 'spyFlashTaskbar',
-                label = 'Flash OS Taskbar on Enemy Detected',
-                tooltipTitle = 'OS Taskbar Flashing (UnitXP SP3)',
-                tooltipText = 'Flashes your Windows taskbar via UnitXP SP3 FlashClientIcon when an enemy is spotted while you are alt-tabbed.'
-            },
-            {
-                id = 'spyStealthAlert',
-                label = 'Stealth Detection Warnings (Rogue/Druid)',
-                tooltipTitle = 'Stealth Action Watcher',
-                tooltipText = 'Watches combat logs and displays instant alerts when hostiles activate Stealth, Prowl, Vanish, or stealth openers.'
-            },
-            {
-                id = 'spyAnnounceNearby',
-                label = 'Broadcast Detected Hostiles to Party/Raid',
-                tooltipTitle = 'Group Hostile Broadcast',
-                tooltipText = 'Automatically sends a party or raid chat alert containing the enemy player\'s name and class when spotted.'
-            },
-        },
-    },
-    {
-        name = 'Automation',
-        title = 'Automation & Battlegrounds',
-        checkboxes = {
-            {
-                id = 'avMode',
-                label = 'Enable AV Compact Mode (BattlegroundTargets style)',
-                tooltipTitle = 'AV BattlegroundTargets Mode',
-                tooltipText = 'In Alterac Valley (40 enemies), automatically switches to an ultra-compact 4x10 grid with 16px slim bars (BattlegroundTargets style) to keep your screen completely clear and unobstructed.'
-            },
-            {
-                id = 'avShowOnlyNearby',
-                label = 'AV: Show Only Nearby / Active Enemies',
-                tooltipTitle = 'AV Active Enemy Filter',
-                tooltipText = 'In Alterac Valley, automatically hides far-away hostiles, showing only enemies that are nearby or engaged in active combat around you.'
-            },
-            {
-                id = 'smartDistanceSorting',
-                label = 'Sort Frames by Distance (Closest first)',
-                tooltipTitle = 'Smart Distance Sorting',
-                tooltipText = 'Continuously sorts unit frame cards by real-time 3D Euclidean distance (via UnitXP SP3), placing the closest hostiles at the top.'
-            },
-            {
-                id = 'efcDistanceTracking',
-                label = 'Track Distance to Flag Carrier (WSG)',
-                tooltipTitle = 'EFC Distance Telemetry',
-                tooltipText = 'Calculates live 3D yard distance to the Enemy Flag Carrier in Warsong Gulch and updates targeting telemetry.'
-            },
-            {
-                id = 'efcBGannouncement',
-                label = 'Alert Chat when EFC has Low Health',
-                tooltipTitle = 'EFC Low Health Announcement',
-                tooltipText = 'Automatically broadcasts an alert to the /battleground chat channel when the Enemy Flag Carrier\'s health drops below 40%, 20%, or 10% in Warsong Gulch.'
-            },
-        },
-    },
-    {
-        name = 'Appearance',
-        title = 'Appearance & Layout',
-        checkboxes = {
             {
                 id = 'displayNames',
-                label = 'Show Player Names on Frames',
+                label = 'Show Character Names on Cards',
                 tooltipTitle = 'Display Player Names',
-                tooltipText = 'Displays character names on enemy unit cards (automatically hidden when Health Numbers mode is active).'
-            },
-            {
-                id = 'displayManabar',
-                label = 'Show Mana/Rage/Energy Bar',
-                tooltipTitle = 'Power Resource Bar',
-                tooltipText = 'Displays secondary resource power bars (Mana, Rage, Energy) below unit health bars.'
+                tooltipText = 'Displays character names on enemy unit cards.'
             },
             {
                 id = 'displayHealthValues',
-                label = 'Show Health Numbers (UnitXP SP3)',
+                label = 'Show Health Numbers & % (UnitXP SP3)',
                 tooltipTitle = 'Exact Health Numbers',
-                tooltipText = 'Displays exact uncapped current and maximum numerical health values (e.g. 4850 / 5200) on unit health bars via UnitXP SP3.'
+                tooltipText = 'Displays real-time uncapped current and maximum numerical health (e.g. 4.8k / 100%) on unit health bars via UnitXP SP3.'
+            },
+            {
+                id = 'displayManabar',
+                label = 'Show Power Bar (Mana / Rage / Energy)',
+                tooltipTitle = 'Power Resource Bar',
+                tooltipText = 'Displays secondary resource power bars below unit health bars.'
             },
             {
                 id = 'displayManaValues',
@@ -217,27 +97,147 @@ local TABS_CONFIG = {
             },
             {
                 id = 'displayOnlyNearby',
-                label = 'Hide Distant/Dead Units',
+                label = 'Hide Out-of-Range Units (>80yd)',
                 tooltipTitle = 'Hide Out-of-Range Units',
                 tooltipText = 'Dynamically hides enemy unit frame cards when players are out of range or not detected nearby.'
             },
+        },
+        hasDimensions = true,
+        hasScale = true,
+        hasLayout = true,
+    },
+    {
+        name = 'Battlegrounds',
+        title = 'Battlegrounds Engine (AV / WSG / AB)',
+        checkboxes = {
             {
-                id = 'castTimers',
-                label = 'Show Cast Bar Timer Text',
-                tooltipTitle = 'Cast Duration Timers',
-                tooltipText = 'Displays real-time numerical countdown seconds (e.g. 1.4s) on enemy casting bars.'
+                id = 'avMode',
+                label = 'Enable AV Compact Mode (BattlegroundTargets Style)',
+                tooltipTitle = 'AV BattlegroundTargets Mode',
+                tooltipText = 'In Alterac Valley (40 enemies), automatically switches to an ultra-compact 4x10 grid with 16px slim bars (BattlegroundTargets style) to keep your screen completely clear and unobstructed.'
+            },
+            {
+                id = 'avShowOnlyNearby',
+                label = 'AV: Show Only Nearby / Active Combatants',
+                tooltipTitle = 'AV Active Enemy Filter',
+                tooltipText = 'In Alterac Valley, automatically hides far-away hostiles, showing only enemies that are nearby or engaged in active combat around you.'
+            },
+            {
+                id = 'efcDistanceTracking',
+                label = 'Track 3D Yard Distance to Flag Carrier (WSG)',
+                tooltipTitle = 'EFC Distance Telemetry',
+                tooltipText = 'Calculates live 3D yard distance to the Enemy Flag Carrier in Warsong Gulch and updates targeting telemetry.'
+            },
+            {
+                id = 'efcBGannouncement',
+                label = 'Alert /bg Chat on EFC Low Health (<40%, <20%, <10%)',
+                tooltipTitle = 'EFC Low Health Announcement',
+                tooltipText = 'Automatically broadcasts an alert to the /battleground chat channel when the Enemy Flag Carrier\'s health drops below 40%, 20%, or 10% in Warsong Gulch.'
+            },
+            {
+                id = 'smartDistanceSorting',
+                label = 'Sort Frames by Distance (Closest First)',
+                tooltipTitle = 'Smart Distance Sorting',
+                tooltipText = 'Continuously sorts unit frame cards by real-time 3D Euclidean distance (via UnitXP SP3), placing the closest hostiles at the top.'
             },
         },
-        hasLayout = true,
-        layoutTitle = 'Frame Layout Mode',
-        layoutTooltip = 'Selects the layout arrangement for unit cards:\n• Horizontal: 1 row across\n• Horizontal Block: 5 columns x rows\n• Standard Block: 5 per group\n• Vertical Block: 2 columns\n• Vertical: 1 column down'
-    }
+    },
+    {
+        name = 'Spy & Radar',
+        title = 'Open World PvP Radar & Stealth Watcher',
+        checkboxes = {
+            {
+                id = 'openWorldScanning',
+                label = 'Scan Hostiles in Open World (Non-BG Radar)',
+                tooltipTitle = 'Open World PvP Radar',
+                tooltipText = 'Enables nameplate and combat log scanning outside battlegrounds to detect, track, and display hostile players in world PvP.'
+            },
+            {
+                id = 'showDistance',
+                label = 'Show Live 3D Yard Distance on Enemy Cards',
+                tooltipTitle = 'Live 3D Distance Tracker',
+                tooltipText = 'Calculates real-time 3D Euclidean distance (in yards) to detected hostiles via SuperWoW UnitPosition, displaying color-coded yard tags directly on each enemy frame (Red <10yd, Yellow 10-30yd, Green >30yd).'
+            },
+            {
+                id = 'spyStealthAlert',
+                label = 'Stealth & Prowl Detection Warnings (Rogue / Druid)',
+                tooltipTitle = 'Stealth Action Watcher',
+                tooltipText = 'Watches combat logs and displays instant alerts when hostiles activate Stealth, Prowl, Vanish, or stealth openers.'
+            },
+            {
+                id = 'spySoundAlert',
+                label = 'Play Audio Alarm on Enemy Spotted',
+                tooltipTitle = 'Audio Warning Alarm',
+                tooltipText = 'Plays an immediate raid warning audio alarm through the Master audio channel when a new hostile enemy is spotted.'
+            },
+            {
+                id = 'spyFlashTaskbar',
+                label = 'Flash Windows Taskbar on Enemy Spotted (Alt-Tab Alert)',
+                tooltipTitle = 'OS Taskbar Flashing (UnitXP SP3)',
+                tooltipText = 'Flashes your Windows taskbar via UnitXP SP3 FlashClientIcon when an enemy is spotted while you are alt-tabbed.'
+            },
+            {
+                id = 'spyAnnounceNearby',
+                label = 'Broadcast Spotted Hostiles to Party / Raid Chat',
+                tooltipTitle = 'Group Hostile Broadcast',
+                tooltipText = 'Automatically sends a party or raid chat alert containing the enemy player\'s name and class when spotted.'
+            },
+        },
+    },
+    {
+        name = 'Combat HUD',
+        title = 'Target Frame & Combat HUD Alerts',
+        checkboxes = {
+            {
+                id = 'integratedTargetFrameCastbar',
+                label = 'Compact Casting Bar inside TargetFrame Nameplate',
+                tooltipTitle = 'Embedded Nameplate Castbar',
+                tooltipText = 'Embeds a sleek casting progress bar directly inside the default Blizzard TargetFrame nameplate background.'
+            },
+            {
+                id = 'targetFrameCastbar',
+                label = 'Independent Movable Target Castbar with Icon',
+                tooltipTitle = 'Movable Target Castbar',
+                tooltipText = 'Renders an independent, movable castbar beneath your TargetFrame with spell icon, duration, and latency spark.'
+            },
+            {
+                id = 'targetDebuffTimers',
+                label = 'Show Timer Text on Target Debuffs',
+                tooltipTitle = 'Target Debuff Timers',
+                tooltipText = 'Displays numeric countdown seconds and cooldown spirals directly on TargetFrame buff and debuff icons.'
+            },
+            {
+                id = 'playerTargetCounter',
+                label = 'Player Target Counter (Teammate Focus Indicator)',
+                tooltipTitle = 'Focus Fire Target Counter',
+                tooltipText = 'Shows the number of raid/party members currently targeting each enemy unit card for instant focus fire coordination.'
+            },
+            {
+                id = 'castTimers',
+                label = 'Show Cast Duration Timers on Unit Cards',
+                tooltipTitle = 'Unit Card Cast Timers',
+                tooltipText = 'Displays real-time numerical countdown seconds (e.g. 1.4s) on enemy card casting bars.'
+            },
+            {
+                id = 'ccAnnounce',
+                label = 'Announce Crowd Control (CC) Breaks to Chat',
+                tooltipTitle = 'Crowd Control Alerts',
+                tooltipText = 'Automatically alerts your team in /say or /battleground when your character is afflicted by major crowd control (Sap, Blind, Polymorph, Fear).'
+            },
+            {
+                id = 'mouseOver',
+                label = 'Enable Mouseover Spellcasting (on Frames)',
+                tooltipTitle = 'Mouseover Spellcasting',
+                tooltipText = 'Allows casting spells directly onto unit frame cards via mouseover bindings without dropping your current target.'
+            },
+        },
+    },
 }
 
 local settings = CreateFrame('Frame', 'fosterFramesSettings', UIParent)
 settings:ClearAllPoints()
-settings:SetWidth(470)
-settings:SetHeight(380)
+settings:SetWidth(520)
+settings:SetHeight(440)
 settings:SetFrameLevel(60)
 settings:SetPoint('CENTER', UIParent, 0, 0)
 settings:SetBackdrop({
@@ -245,8 +245,8 @@ settings:SetBackdrop({
     edgeFile = [[Interface\DialogFrame\UI-DialogBox-Border]],
     insets   = { left = 11, right = 12, top = 12, bottom = 11 }
 })
-settings:SetBackdropColor(0, 0, 0, 1)
-settings:SetBackdropBorderColor(0.2, 0.2, 0.2)
+settings:SetBackdropColor(0, 0, 0, 0.98)
+settings:SetBackdropBorderColor(0.25, 0.25, 0.25)
 settings:SetMovable(true)
 settings:SetUserPlaced(true)
 settings:SetClampedToScreen(true)
@@ -259,7 +259,7 @@ settings:Hide()
 
 -- Header
 settings.header = settings:CreateTexture(nil, 'ARTWORK')
-settings.header:SetWidth(320)
+settings.header:SetWidth(340)
 settings.header:SetHeight(64)
 settings.header:SetPoint('TOP', settings, 0, 12)
 settings.header:SetTexture([[Interface\DialogFrame\UI-DialogBox-Header]])
@@ -267,8 +267,8 @@ settings.header:SetVertexColor(0.2, 0.2, 0.2)
 
 settings.header.t = settings:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
 settings.header.t:SetPoint('TOP', settings.header, 0, -14)
-settings.header.t:SetText('FosterFrames Settings')
-settings.header.t:SetTextColor(0.68, 0.49, 0.93, 0.9)
+settings.header.t:SetText('FosterFrames Configuration')
+settings.header.t:SetTextColor(0.68, 0.49, 0.93, 0.95)
 
 -- Close Button
 settings.x = CreateFrame('Button', 'fosterFramesSettingsCloseButton', settings, 'UIPanelCloseButton')
@@ -276,18 +276,18 @@ settings.x:SetPoint('TOPRIGHT', -6, -6)
 
 -- Sidebar
 settings.sidebar = CreateFrame('Frame', nil, settings)
-settings.sidebar:SetWidth(108)
+settings.sidebar:SetWidth(118)
 settings.sidebar:SetPoint('TOPLEFT', settings, 'TOPLEFT', 11, -40)
 settings.sidebar:SetPoint('BOTTOMLEFT', settings, 'BOTTOMLEFT', 11, 11)
 settings.sidebar:SetBackdrop({ bgFile = [[Interface\Tooltips\UI-Tooltip-Background]] })
-settings.sidebar:SetBackdropColor(0.1, 0.1, 0.1, 0.5)
+settings.sidebar:SetBackdropColor(0.1, 0.1, 0.1, 0.6)
 
 -- Content Area
 settings.content = CreateFrame('Frame', 'fosterFramesSettingsContent', settings)
-settings.content:SetPoint('TOPLEFT', settings.sidebar, 'TOPRIGHT', 5, 0)
+settings.content:SetPoint('TOPLEFT', settings.sidebar, 'TOPRIGHT', 6, 0)
 settings.content:SetPoint('BOTTOMRIGHT', settings, 'BOTTOMRIGHT', -12, 11)
 settings.content:SetBackdrop({ bgFile = [[Interface\Tooltips\UI-Tooltip-Background]] })
-settings.content:SetBackdropColor(0.05, 0.05, 0.05, 0.5)
+settings.content:SetBackdropColor(0.04, 0.04, 0.04, 0.6)
 
 -- Containers and Controls
 local containers = {}
@@ -317,7 +317,7 @@ local function CreateTabContainers()
         local header = container:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
         header:SetPoint('TOPLEFT', container, 'TOPLEFT', 15, -15)
         header:SetText(tabData.title)
-        header:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.9)
+        header:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.95)
 
         local prev = header
         if tabData.checkboxes then
@@ -325,7 +325,7 @@ local function CreateTabContainers()
                 local cb = CreateFrame('CheckButton', 'fosterFramesCB_' .. tabIdx .. '_' .. cbIdx, container, 'UICheckButtonTemplate')
                 cb:SetHeight(22)
                 cb:SetWidth(22)
-                cb:SetPoint('TOPLEFT', prev, 'BOTTOMLEFT', 0, (cbIdx == 1 and -10 or -6))
+                cb:SetPoint('TOPLEFT', prev, 'BOTTOMLEFT', 0, (cbIdx == 1 and -10 or -5))
 
                 local cbText = _G[cb:GetName() .. 'Text']
                 cbText:SetText(cbData.label)
@@ -353,52 +353,16 @@ local function CreateTabContainers()
             end
         end
 
-        -- Scale Slider for General
-        if tabData.hasScale then
-            local scaleLabel = container:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
-            scaleLabel:SetPoint('TOPLEFT', prev, 'BOTTOMLEFT', 0, -15)
-            scaleLabel:SetText('Global Frame Scale')
-            scaleLabel:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.9)
-
-            local scaleSlider = CreateFrame('Slider', 'fosterFramesScaleSlider', container, 'OptionsSliderTemplate')
-            scaleSlider:SetWidth(210)
-            scaleSlider:SetHeight(16)
-            scaleSlider:SetPoint('TOPLEFT', scaleLabel, 'BOTTOMLEFT', 5, -8)
-            scaleSlider:SetMinMaxValues(0.8, 1.5)
-            scaleSlider:SetValueStep(0.05)
-            _G[scaleSlider:GetName() .. 'Low']:SetText('0.8')
-            _G[scaleSlider:GetName() .. 'High']:SetText('1.5')
-            _G[scaleSlider:GetName() .. 'Text']:SetText('')
-
-            scaleSlider.ttTitle = tabData.scaleTitle or 'Frame Scale'
-            scaleSlider.ttText = tabData.scaleTooltip
-
-            scaleSlider:SetScript('OnValueChanged', function()
-                local val = FosterFrames.Helpers.Round(this:GetValue(), 2)
-                FOSTERFRAMESPLAYERDATA['scale'] = val
-                if fosterFrameDisplay then
-                    fosterFrameDisplay:SetScale(val)
-                end
-            end)
-
-            scaleSlider:SetScript('OnEnter', function()
-                ShowTooltip(this, this.ttTitle, this.ttText)
-            end)
-            scaleSlider:SetScript('OnLeave', function() GameTooltip:Hide() end)
-
-            container.scaleSlider = scaleSlider
-        end
-
-        -- Dimensions & Layout Sliders for Appearance
-        if tabData.hasLayout then
+        -- Dimensions & Sliders for Display Tab
+        if tabData.hasDimensions then
             -- Width Slider
             local widthLabel = container:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
-            widthLabel:SetPoint('TOPLEFT', prev, 'BOTTOMLEFT', 0, -10)
+            widthLabel:SetPoint('TOPLEFT', prev, 'BOTTOMLEFT', 0, -12)
             widthLabel:SetText('Frame Width')
             widthLabel:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.9)
 
             local widthSlider = CreateFrame('Slider', 'fosterFramesWidthSlider', container, 'OptionsSliderTemplate')
-            widthSlider:SetWidth(150)
+            widthSlider:SetWidth(160)
             widthSlider:SetHeight(16)
             widthSlider:SetPoint('TOPLEFT', widthLabel, 'BOTTOMLEFT', 5, -8)
             widthSlider:SetMinMaxValues(80, 200)
@@ -424,12 +388,12 @@ local function CreateTabContainers()
 
             -- Height Slider
             local heightLabel = container:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
-            heightLabel:SetPoint('LEFT', widthLabel, 'LEFT', 170, 0)
+            heightLabel:SetPoint('LEFT', widthLabel, 'LEFT', 185, 0)
             heightLabel:SetText('Frame Height')
             heightLabel:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.9)
 
             local heightSlider = CreateFrame('Slider', 'fosterFramesHeightSlider', container, 'OptionsSliderTemplate')
-            heightSlider:SetWidth(150)
+            heightSlider:SetWidth(160)
             heightSlider:SetHeight(16)
             heightSlider:SetPoint('TOPLEFT', heightLabel, 'BOTTOMLEFT', 5, -8)
             heightSlider:SetMinMaxValues(16, 45)
@@ -453,24 +417,55 @@ local function CreateTabContainers()
             heightSlider:SetScript('OnLeave', function() GameTooltip:Hide() end)
             container.heightSlider = heightSlider
 
+            -- Scale Slider
+            local scaleLabel = container:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
+            scaleLabel:SetPoint('TOPLEFT', widthSlider, 'BOTTOMLEFT', -5, -14)
+            scaleLabel:SetText('Global Scale')
+            scaleLabel:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.9)
+
+            local scaleSlider = CreateFrame('Slider', 'fosterFramesScaleSlider', container, 'OptionsSliderTemplate')
+            scaleSlider:SetWidth(160)
+            scaleSlider:SetHeight(16)
+            scaleSlider:SetPoint('TOPLEFT', scaleLabel, 'BOTTOMLEFT', 5, -8)
+            scaleSlider:SetMinMaxValues(0.8, 1.5)
+            scaleSlider:SetValueStep(0.05)
+            _G[scaleSlider:GetName() .. 'Low']:SetText('0.8x')
+            _G[scaleSlider:GetName() .. 'High']:SetText('1.5x')
+            _G[scaleSlider:GetName() .. 'Text']:SetText((FOSTERFRAMESPLAYERDATA['scale'] or 1.0) .. 'x')
+
+            scaleSlider.ttTitle = 'Global Scale'
+            scaleSlider.ttText = 'Scales the overall size and dimensions of the FosterFrames unit grid between 0.8x and 1.5x.'
+
+            scaleSlider:SetScript('OnValueChanged', function()
+                local val = FosterFrames.Helpers.Round(this:GetValue(), 2)
+                FOSTERFRAMESPLAYERDATA['scale'] = val
+                _G[this:GetName() .. 'Text']:SetText(val .. 'x')
+                if fosterFrameDisplay then
+                    fosterFrameDisplay:SetScale(val)
+                end
+            end)
+            scaleSlider:SetScript('OnEnter', function() ShowTooltip(this, this.ttTitle, this.ttText) end)
+            scaleSlider:SetScript('OnLeave', function() GameTooltip:Hide() end)
+            container.scaleSlider = scaleSlider
+
             -- Layout Slider
             local layoutLabel = container:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
-            layoutLabel:SetPoint('TOPLEFT', widthSlider, 'BOTTOMLEFT', -5, -16)
-            layoutLabel:SetText('Frame Layout Mode')
+            layoutLabel:SetPoint('LEFT', scaleLabel, 'LEFT', 185, 0)
+            layoutLabel:SetText('Grid Layout Mode')
             layoutLabel:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.9)
 
             local layoutSlider = CreateFrame('Slider', 'fosterFramesLayoutSlider', container, 'OptionsSliderTemplate')
-            layoutSlider:SetWidth(210)
+            layoutSlider:SetWidth(160)
             layoutSlider:SetHeight(16)
             layoutSlider:SetPoint('TOPLEFT', layoutLabel, 'BOTTOMLEFT', 5, -8)
             layoutSlider:SetMinMaxValues(0, 4)
             layoutSlider:SetValueStep(1)
-            _G[layoutSlider:GetName() .. 'Low']:SetText('Horizontal')
-            _G[layoutSlider:GetName() .. 'High']:SetText('Vertical')
+            _G[layoutSlider:GetName() .. 'Low']:SetText('Horiz')
+            _G[layoutSlider:GetName() .. 'High']:SetText('Vert')
             _G[layoutSlider:GetName() .. 'Text']:SetText('')
 
-            layoutSlider.ttTitle = tabData.layoutTitle or 'Layout Mode'
-            layoutSlider.ttText = tabData.layoutTooltip
+            layoutSlider.ttTitle = 'Frame Layout Mode'
+            layoutSlider.ttText = 'Selects the layout arrangement for unit cards:\n• 0: Horizontal (1 row across)\n• 1: Horizontal Block (5 columns x rows)\n• 2: Standard Block (5 per column)\n• 3: Dual Column (2 columns x rows)\n• 4: Vertical (1 column down)'
 
             layoutSlider:SetScript('OnValueChanged', function()
                 local v = this:GetValue()
@@ -480,12 +475,8 @@ local function CreateTabContainers()
                 FOSTERFRAMESPLAYERDATA['groupsize'] = groupMap[v] or 5
                 if FOSTERFRAMESsettings then FOSTERFRAMESsettings() end
             end)
-
-            layoutSlider:SetScript('OnEnter', function()
-                ShowTooltip(this, this.ttTitle, this.ttText)
-            end)
+            layoutSlider:SetScript('OnEnter', function() ShowTooltip(this, this.ttTitle, this.ttText) end)
             layoutSlider:SetScript('OnLeave', function() GameTooltip:Hide() end)
-
             container.layoutSlider = layoutSlider
         end
     end
@@ -497,25 +488,26 @@ local function RefreshSettingsUI()
         cb:SetChecked(FOSTERFRAMESPLAYERDATA[cb.settingId] and true or false)
     end
 
-    if containers[1] and containers[1].scaleSlider then
-        containers[1].scaleSlider:SetValue(FOSTERFRAMESPLAYERDATA['scale'] or 1.0)
-    end
-
-    if containers[5] then
-        if containers[5].widthSlider then
+    if containers[1] then
+        if containers[1].widthSlider then
             local w = FOSTERFRAMESPLAYERDATA['unitWidth'] or 126
-            containers[5].widthSlider:SetValue(w)
-            _G[containers[5].widthSlider:GetName() .. 'Text']:SetText(w .. 'px')
+            containers[1].widthSlider:SetValue(w)
+            _G[containers[1].widthSlider:GetName() .. 'Text']:SetText(w .. 'px')
         end
-        if containers[5].heightSlider then
+        if containers[1].heightSlider then
             local h = FOSTERFRAMESPLAYERDATA['unitHeight'] or 24
-            containers[5].heightSlider:SetValue(h)
-            _G[containers[5].heightSlider:GetName() .. 'Text']:SetText(h .. 'px')
+            containers[1].heightSlider:SetValue(h)
+            _G[containers[1].heightSlider:GetName() .. 'Text']:SetText(h .. 'px')
         end
-        if containers[5].layoutSlider then
+        if containers[1].scaleSlider then
+            local s = FOSTERFRAMESPLAYERDATA['scale'] or 1.0
+            containers[1].scaleSlider:SetValue(s)
+            _G[containers[1].scaleSlider:GetName() .. 'Text']:SetText(s .. 'x')
+        end
+        if containers[1].layoutSlider then
             local layout = FOSTERFRAMESPLAYERDATA['layout'] or 'block'
             local val = (layout == 'horizontal' and 0) or (layout == 'hblock' and 1) or (layout == 'block' and 2) or (layout == 'vblock' and 3) or 4
-            containers[5].layoutSlider:SetValue(val)
+            containers[1].layoutSlider:SetValue(val)
         end
     end
 end
@@ -524,10 +516,10 @@ end
 settings.tabs = {}
 for i, tabData in ipairs(TABS_CONFIG) do
     local btn = CreateFrame('Button', 'fosterFramesTabBtn' .. i, settings.sidebar, 'UIPanelButtonTemplate')
-    btn:SetWidth(98)
-    btn:SetHeight(23)
+    btn:SetWidth(106)
+    btn:SetHeight(25)
     btn:SetText(tabData.name)
-    btn:SetPoint('TOP', settings.sidebar, 'TOP', 0, -8 - (i - 1) * 26)
+    btn:SetPoint('TOP', settings.sidebar, 'TOP', 0, -8 - (i - 1) * 28)
     btn.tabIdx = i
 
     btn:SetScript('OnClick', function()
@@ -540,8 +532,8 @@ end
 
 -- Test Mode Button (Live Preview Cycler: 10 -> 15 -> 40 -> OFF)
 settings.testBtn = CreateFrame('Button', 'fosterFramesSettingsTestButton', settings.sidebar, 'UIPanelButtonTemplate')
-settings.testBtn:SetWidth(98)
-settings.testBtn:SetHeight(23)
+settings.testBtn:SetWidth(106)
+settings.testBtn:SetHeight(24)
 settings.testBtn:SetPoint('BOTTOM', settings.sidebar, 'BOTTOM', 0, 68)
 settings.testBtn:SetText('Test: 10')
 settings.testBtn.ttTitle = 'Live Preview Scenarios'
@@ -566,11 +558,10 @@ settings.testBtn:SetScript('OnEnter', function()
 end)
 settings.testBtn:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
-
 -- Unlock/Lock Position Button
 settings.unlock = CreateFrame('Button', 'fosterFramesSettingsUnlockButton', settings.sidebar, 'UIPanelButtonTemplate')
-settings.unlock:SetWidth(98)
-settings.unlock:SetHeight(23)
+settings.unlock:SetWidth(106)
+settings.unlock:SetHeight(24)
 settings.unlock:SetPoint('BOTTOM', settings.sidebar, 'BOTTOM', 0, 39)
 settings.unlock:SetText(FOSTERFRAMESPLAYERDATA['frameMovable'] and 'Lock' or 'Unlock')
 settings.unlock.ttTitle = 'Lock / Unlock Frames'
@@ -581,6 +572,9 @@ settings.unlock:SetScript('OnClick', function()
     if fosterFrameDisplay and fosterFrameDisplay.bg then
         if FOSTERFRAMESPLAYERDATA['frameMovable'] then fosterFrameDisplay.bg:Show() else fosterFrameDisplay.bg:Hide() end
     end
+    if fosterFrameDisplay and fosterFrameDisplay.lockBtn and fosterFrameDisplay.lockBtn.text then
+        fosterFrameDisplay.lockBtn.text:SetText(FOSTERFRAMESPLAYERDATA['frameMovable'] and '-' or '+')
+    end
     if FOSTERFRAMESsettings then FOSTERFRAMESsettings() end
 end)
 settings.unlock:SetScript('OnEnter', function()
@@ -590,8 +584,8 @@ settings.unlock:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
 -- Reset Position Button
 settings.reset = CreateFrame('Button', 'fosterFramesSettingsResetButton', settings.sidebar, 'UIPanelButtonTemplate')
-settings.reset:SetWidth(98)
-settings.reset:SetHeight(23)
+settings.reset:SetWidth(106)
+settings.reset:SetHeight(24)
 settings.reset:SetPoint('BOTTOM', settings.sidebar, 'BOTTOM', 0, 10)
 settings.reset:SetText('Reset Pos')
 settings.reset.ttTitle = 'Reset Position'
@@ -678,6 +672,8 @@ SlashCmdList["FOSTERFRAMES"] = function(msg)
         FOSTERFRAMES_SetTestMode(true, 15)
     elseif msg == '10' or msg == 'wsg' or msg == 'debug' or msg == 'test' then
         FOSTERFRAMES_SetTestMode(true, 10)
+    elseif msg == '40' or msg == 'av' then
+        FOSTERFRAMES_SetTestMode(true, 40)
     elseif msg == 'hide' or msg == 'off' then
         FOSTERFRAMES_HideFrames()
     elseif msg == 'data' then
@@ -691,5 +687,6 @@ SlashCmdList["FOSTERFRAMES"] = function(msg)
         end
     end
 end
+
 
 

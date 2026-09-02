@@ -1,0 +1,73 @@
+-- FosterFrames - Addon Communication Handler
+-- Enhanced 1.12.1 Engine Stack (ClassicAPI / Zero GC Churn)
+
+local msgPrefix = {
+    ['RT']   = 'BGEFRT',
+    ['EFC']  = 'BGEFEFC',
+    ['BF']   = 'BGEFEBF',
+    ['SCAN'] = 'BGEFSCN',
+}
+
+function sendMSG(typ, d, icon, bg)
+    if not typ or not msgPrefix[typ] then return end
+    if not icon or icon == '' then icon = ' ' end
+    local payload = UnitName('player') .. '/' .. (d or ' ') .. '/' .. icon
+    local channel = bg and 'BATTLEGROUND' or (UnitInRaid('player') and 'RAID' or 'PARTY')
+    if not UnitInRaid('player') and GetNumPartyMembers() == 0 and not bg then return end
+    SendAddonMessage(msgPrefix[typ], payload, channel)
+end
+
+local function handleScan(message)
+    local sender, name, class, guid = message:match("([^/]+)/([^/]+)/([^/]+)/([^/]+)")
+    if sender and sender ~= UnitName('player') then
+        local u = {
+            ['name']  = name,
+            ['class'] = (class ~= ' ' and class) or nil,
+            ['guid']  = (guid ~= ' ' and guid) or nil,
+        }
+        FOSTERFRAMECOREAddSpottedUnit(u)
+    end
+end
+
+local function handleRaidTarget(message)
+    local sender, target, icon = message:match("([^/]+)/([^/]+)/([^/]+)")
+    if sender then
+        FOSTERFRAMECORESetRaidTarget(sender, target, icon)
+    end
+end
+
+local function handleEFC(message)
+    local sender, allianceEFC, hordeEFC = message:match("([^/]+)/([^/]+)/([^/]+)")
+    if sender and sender ~= UnitName('player') then
+        local fc = {
+            ['Alliance'] = (allianceEFC ~= ' ' and allianceEFC) or nil,
+            ['Horde']    = (hordeEFC ~= ' ' and hordeEFC) or nil,
+        }
+        FOSTERFRAMECOREUpdateFlagCarriers(fc)
+    end
+end
+
+local function handleBuff(message)
+    local sender, tar, spell, dur = message:match("([^/]+)/([^/]+)/([^/]+)/([^/]+)")
+    if sender and sender ~= UnitName('player') then
+        SPELLCASTINGCOREaddBuff(tar, spell, dur)
+    end
+end
+
+local f = CreateFrame('Frame')
+f:RegisterEvent('CHAT_MSG_ADDON')
+f:SetScript('OnEvent', function()
+    local prefix = arg1
+    local message = arg2
+    if not prefix or not message then return end
+
+    if prefix == msgPrefix['RT'] then
+        handleRaidTarget(message)
+    elseif prefix == msgPrefix['EFC'] then
+        handleEFC(message)
+    elseif prefix == msgPrefix['SCAN'] then
+        handleScan(message)
+    elseif prefix == msgPrefix['BF'] then
+        handleBuff(message)
+    end
+end)

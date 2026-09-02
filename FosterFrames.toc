@@ -4,8 +4,8 @@
 ## Version: 1.0.0
 ## Author: Fostercare5988 (Original: zetone)
 ## SavedVariablesPerCharacter: FOSTERFRAMESPLAYERDATA
-## Dependencies: ClassicAPI
-## OptionalDeps: SuperWoW, NamPower, UnitXP_SP3_Addon
+## OptionalDeps: UnitXP_SP3_Addon, SuperAPI
+
 
 # LIBS / RESOURCES
 globals\resources\globals.lua

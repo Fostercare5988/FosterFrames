@@ -1,8 +1,8 @@
 ## Interface: 11200
 ## Title: FosterFrames
-## Notes: High-performance enemy unit frames and tactical combat suite for World of Warcraft 1.12.1.
+## Notes: Modernized enemy unit frames for WoW 1.12.1. Fork of enemyFrames by zetone, rebuilt exclusively for the Enhanced Engine Stack (ClassicAPI, SuperWoW, UnitXP SP3).
 ## Version: 1.0.0
-## Author: Fostercare5988
+## Author: Fostercare5988 (Original: zetone)
 ## SavedVariablesPerCharacter: FOSTERFRAMESPLAYERDATA
 ## Dependencies: ClassicAPI
 ## OptionalDeps: SuperWoW, NamPower, UnitXP_SP3_Addon

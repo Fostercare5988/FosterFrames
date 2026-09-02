@@ -1,5 +1,6 @@
 # FosterFrames
 
+[![Fork of: zetone/enemyFrames](https://img.shields.io/badge/Fork%20of-zetone%2FenemyFrames-blue?logo=github)](https://github.com/zetone/enemyFrames)
 [![Interface: 11200](https://img.shields.io/badge/Interface-11200-blue.svg)](https://github.com/Fostercare5988/FosterFrames)
 [![ClassicAPI: Required](https://img.shields.io/badge/ClassicAPI-Required-brightgreen.svg)](https://github.com/balakethel/ClassicAPI)
 [![SuperWoW: 2.2+](https://img.shields.io/badge/SuperWoW-2.2+-orange.svg)](https://github.com/balakethel/SuperWoW)
@@ -8,7 +9,21 @@
 [![DXVK: Ready](https://img.shields.io/badge/DXVK-144Hz+-blueviolet.svg)](https://github.com/doitsujin/dxvk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**FosterFrames** is a high-performance enemy unit frame suite and battleground tactical combat assistant for World of Warcraft 1.12.1 (Build 5875). Built natively on the **ClassicAPI Enhanced Engine Stack**, FosterFrames eliminates legacy 2006 combat log parsing and hidden tooltip scanning in favor of native C++ engine hooks, sub-pixel DXVK smooth transitions, exact distance calculations, and real-time aura and casting awareness.
+**FosterFrames** is a modern, high-performance fork of the classic **[enemyFrames](https://github.com/zetone/enemyFrames)** addon by **zetone**, rebuilt from the ground up **exclusively** for the World of Warcraft 1.12.1 (Build 5875) Enhanced Engine Stack (**ClassicAPI**, **SuperWoW 2.2+**, **NamPower 4.6.2+**, **UnitXP SP3**, and **DXVK 144Hz+**).
+
+---
+
+## Why a Fork? (Legacy enemyFrames vs. Modern FosterFrames)
+
+| Feature | Original enemyFrames (2006) | FosterFrames (Enhanced Engine) |
+|---|---|---|
+| **Casting Detection** | Text regex scraping on `CHAT_MSG_SPELL_*` | Native C++ `UnitCastingInfo` / `UnitChannelInfo` queries via SuperWoW |
+| **Action Handling** | Hidden `GameTooltip:SetAction()` scraping | Direct SuperWoW API & hardware event bindings |
+| **Distance Telemetry** | Imprecise `CheckInteractDistance` fallback ladders | Exact 3D Euclidean distance calculations via `UnitXP("distance", unit)` |
+| **Health & Mana Values** | Truncated percentages or estimated values | Real uncapped exact HP via `UnitXP("health", unit)` |
+| **Status Bar Smoothing** | Framerate-dependent linear interpolation hacks | True $\Delta t$ exponential smoothing ($dt \cdot 15.0$) for 144Hz+ DXVK displays |
+| **Garbage Collection (GC)** | High runtime table churn on frame updates | Zero-GC pre-allocated arrays & `table.wipe(t)` recycling |
+| **Engine Dependencies** | None (pure 2006 vanilla Lua 5.0 workarounds) | Strictly requires modern engine enhancements (`ClassicAPI.dll`, `SuperWoW.dll`) |
 
 ---
 
@@ -101,22 +116,23 @@ FosterFrames is engineered with strict separation of data acquisition and visual
 
 ## Credits & Acknowledgments
 
-- **Author & Maintainer:** [Fostercare5988](https://github.com/Fostercare5988)
-- **Engine Architecture & ClassicAPI:** [Balakethel](https://github.com/balakethel)
-- **Enhanced 1.12.1 Tooling & NamPower:** [Dustin Lacewell (dustinlacewell)](https://github.com/dustinlacewell)
+- **Original Creator & Concept:** **[zetone](https://github.com/zetone)** (Original creator of [enemyFrames](https://github.com/zetone/enemyFrames))
+- **Author & Maintainer:** **[Fostercare5988](https://github.com/Fostercare5988)**
+- **Engine Architecture & ClassicAPI:** **[Balakethel](https://github.com/balakethel)**
+- **Enhanced 1.12.1 Tooling & NamPower:** **[Dustin Lacewell (dustinlacewell)](https://github.com/dustinlacewell)**
 - **Special Thanks:** The Turtle WoW and vanilla 1.12.1 modding community for continuous support and engine modernization research.
 
 ---
 
 ## Changelog
 
-### v1.0.0 — Modernized Enhanced Engine Release
-- **Complete Core Modernization:** Full refactor for the World of Warcraft 1.12.1 Enhanced Engine Stack (`ClassicAPI`, `SuperWoW`, `NamPower`, `UnitXP SP3`, `DXVK`).
-- **Engine Startup Guard:** Added defensive checks for `CLASSIC_API_VERSION` and `SUPERWOW_VERSION`.
-- **Eradicated Tooltip Scanning:** Completely removed all hidden `GameTooltip` text scraping and combat log string regex parsers.
+### v1.0.0 — Modernized Fork Release
+- **Rebuilt as Modern Fork:** Forked from `zetone/enemyFrames` and stripped all legacy 2006 fallback code.
+- **Pure Engine Stack:** Hard requirement on `ClassicAPI.dll` and `SuperWoW.dll` with defensive startup guards.
+- **Eradicated Tooltip & Log Scraping:** Direct C++ engine calls for casts, auras, and distance.
 - **DXVK 144Hz+ Smoothing:** Status bars rewritten with delta-time exponential smoothing (`dt * 15.0`).
-- **UnitXP SP3 Precision:** Integrated real uncapped health values and exact 4-stage color-graded 3D distance calculations.
-- **Zero-GC Table Recycling:** Replaced runtime table allocations inside render loops with `table.wipe(t)`.
-- **Data-Driven Settings:** Replaced multi-file settings sprawl with a unified, responsive settings panel (`/ff`).
-- **Clean Namespace & Packaging:** Standardized TOC, removed color codes from metadata, and organized modular component hierarchy.
+- **UnitXP SP3 Precision:** Real uncapped health and exact 4-stage color-graded 3D distance calculations.
+- **Zero-GC Table Recycling:** Replaced runtime table allocations with `table.wipe(t)`.
+- **Data-Driven Settings:** Modern, responsive configuration suite (`/ff`).
+
 

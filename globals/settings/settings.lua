@@ -15,8 +15,6 @@ if FOSTERFRAMESPLAYERDATA == nil then
         ['scale']                        = 1,
         ['unitWidth']                    = 150,
         ['unitHeight']                   = 24,
-        ['groupsize']                    = 5,
-        ['layout']                       = 'block',
         ['frameMovable']                 = true,
         ['enableFrames']                 = true,
         ['displayNames']                 = true,
@@ -105,7 +103,6 @@ local TABS_CONFIG = {
         },
         hasDimensions = true,
         hasScale = true,
-        hasLayout = true,
     },
     {
         name = 'Battlegrounds',
@@ -420,6 +417,7 @@ local function CreateTabContainers()
             container.heightSlider = heightSlider
 
             -- Scale Slider
+            -- Scale Slider
             local scaleLabel = container:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
             scaleLabel:SetPoint('TOPLEFT', widthSlider, 'BOTTOMLEFT', -5, -14)
             scaleLabel:SetText('Global Scale')
@@ -449,37 +447,6 @@ local function CreateTabContainers()
             scaleSlider:SetScript('OnEnter', function() ShowTooltip(this, this.ttTitle, this.ttText) end)
             scaleSlider:SetScript('OnLeave', function() GameTooltip:Hide() end)
             container.scaleSlider = scaleSlider
-
-            -- Layout Slider
-            local layoutLabel = container:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
-            layoutLabel:SetPoint('LEFT', scaleLabel, 'LEFT', 185, 0)
-            layoutLabel:SetText('Grid Layout Mode')
-            layoutLabel:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.9)
-
-            local layoutSlider = CreateFrame('Slider', 'fosterFramesLayoutSlider', container, 'OptionsSliderTemplate')
-            layoutSlider:SetWidth(160)
-            layoutSlider:SetHeight(16)
-            layoutSlider:SetPoint('TOPLEFT', layoutLabel, 'BOTTOMLEFT', 5, -8)
-            layoutSlider:SetMinMaxValues(0, 4)
-            layoutSlider:SetValueStep(1)
-            _G[layoutSlider:GetName() .. 'Low']:SetText('Horiz')
-            _G[layoutSlider:GetName() .. 'High']:SetText('Vert')
-            _G[layoutSlider:GetName() .. 'Text']:SetText('')
-
-            layoutSlider.ttTitle = 'Frame Layout Mode'
-            layoutSlider.ttText = 'Selects the layout arrangement for unit cards:\n• 0: Horizontal (1 row across)\n• 1: Horizontal Block (5 columns x rows)\n• 2: Standard Block (5 per column)\n• 3: Dual Column (2 columns x rows)\n• 4: Vertical (1 column down)'
-
-            layoutSlider:SetScript('OnValueChanged', function()
-                local v = this:GetValue()
-                local layoutMap = { [0] = 'horizontal', [1] = 'hblock', [2] = 'block', [3] = 'vblock', [4] = 'vertical' }
-                local groupMap = { [0] = 1, [1] = 5, [2] = 5, [3] = 2, [4] = 15 }
-                FOSTERFRAMESPLAYERDATA['layout'] = layoutMap[v] or 'block'
-                FOSTERFRAMESPLAYERDATA['groupsize'] = groupMap[v] or 5
-                if FOSTERFRAMESsettings then FOSTERFRAMESsettings() end
-            end)
-            layoutSlider:SetScript('OnEnter', function() ShowTooltip(this, this.ttTitle, this.ttText) end)
-            layoutSlider:SetScript('OnLeave', function() GameTooltip:Hide() end)
-            container.layoutSlider = layoutSlider
         end
     end
 end
@@ -492,7 +459,7 @@ local function RefreshSettingsUI()
 
     if containers[1] then
         if containers[1].widthSlider then
-            local w = FOSTERFRAMESPLAYERDATA['unitWidth'] or 126
+            local w = FOSTERFRAMESPLAYERDATA['unitWidth'] or 150
             containers[1].widthSlider:SetValue(w)
             _G[containers[1].widthSlider:GetName() .. 'Text']:SetText(w .. 'px')
         end
@@ -506,13 +473,9 @@ local function RefreshSettingsUI()
             containers[1].scaleSlider:SetValue(s)
             _G[containers[1].scaleSlider:GetName() .. 'Text']:SetText(s .. 'x')
         end
-        if containers[1].layoutSlider then
-            local layout = FOSTERFRAMESPLAYERDATA['layout'] or 'block'
-            local val = (layout == 'horizontal' and 0) or (layout == 'hblock' and 1) or (layout == 'block' and 2) or (layout == 'vblock' and 3) or 4
-            containers[1].layoutSlider:SetValue(val)
-        end
     end
 end
+
 
 -- Sidebar Navigation Buttons
 settings.tabs = {}

@@ -378,72 +378,58 @@ end
 
 local function arrangeUnits()
     if not FOSTERFRAMESPLAYERDATA then return end
-    local layout = FOSTERFRAMESPLAYERDATA['layout'] or 'block'
-    local activeUnits = FOSTERFRAMES_TESTMODE and testUnitCount or maxUnits
-    if activeUnits < 1 then activeUnits = 1 end
 
     local currentZoneName = GetZoneText()
     local isAV = (currentZoneName == 'Alterac Valley') or (FOSTERFRAMES_TESTMODE and testUnitCount == 40)
     local isAVMode = isAV and (FOSTERFRAMESPLAYERDATA['avMode'] ~= false)
+    local isWSG = (currentZoneName == 'Warsong Gulch') or (FOSTERFRAMES_TESTMODE and testUnitCount == 10)
+    local isAB = (currentZoneName == 'Arathi Basin') or (FOSTERFRAMES_TESTMODE and testUnitCount == 15)
 
-    local width = unitWidth or 126
+    local width = unitWidth or 150
     local height = unitHeight or 24
     local currentXGap = isAVMode and 4 or xGap
     local currentYGap = isAVMode and 2 or yGap
 
-    local unitsPerCol = 5
-    if isAVMode then
-        unitsPerCol = (layout == 'block') and 10 or (layout == 'hblock' and 8) or 10
+    -- Groups of 5 standard PvP columns (or 10 in AV compact mode)
+    local unitsPerCol = isAVMode and 10 or 5
+
+    local activeUnits = 5
+    if FOSTERFRAMES_TESTMODE then
+        activeUnits = testUnitCount or 10
+    elseif isAV then
+        activeUnits = 40
+    elseif isAB then
+        activeUnits = 15
+    elseif isWSG then
+        activeUnits = 10
+    else
+        -- Open World: size columns dynamically to detected units (1 column if 0-5, 2 if 6-10, etc.)
+        local spottedCount = (fosterFrame.uiList and #fosterFrame.uiList) or 0
+        activeUnits = math.max(5, math.min(15, spottedCount))
     end
 
-    local numCols = 1
-    if layout == 'horizontal' then
-        numCols = activeUnits
-    elseif layout == 'hblock' then
-        numCols = math.min(isAVMode and 5 or 5, activeUnits)
-    elseif layout == 'vblock' then
-        numCols = 2
-    elseif layout == 'vertical' then
-        numCols = 1
-    else -- 'block'
-        numCols = math.ceil(activeUnits / unitsPerCol)
-    end
+    local numCols = math.ceil(activeUnits / unitsPerCol)
     if numCols < 1 then numCols = 1 end
 
     fosterFrameDisplay:SetWidth(numCols * width + (numCols - 1) * currentXGap)
 
     if playerFaction == 'Alliance' then
-        fosterFrameDisplay.Title:SetText(layout == 'vertical' and 'H ' or 'Horde')
+        fosterFrameDisplay.Title:SetText('Horde')
     else
-        fosterFrameDisplay.Title:SetText(layout == 'vertical' and 'A ' or 'Alliance')
+        fosterFrameDisplay.Title:SetText('Alliance')
     end
 
     for i = 1, unitLimit do
         units[i]:ClearAllPoints()
-        local col, row = 0, 0
-
-        if layout == 'horizontal' then
-            col = i - 1
-            row = 0
-        elseif layout == 'hblock' then
-            col = (i - 1) % (isAVMode and 5 or 5)
-            row = math.floor((i - 1) / (isAVMode and 5 or 5))
-        elseif layout == 'vblock' then
-            col = (i - 1) % 2
-            row = math.floor((i - 1) / 2)
-        elseif layout == 'vertical' then
-            col = 0
-            row = i - 1
-        else -- 'block'
-            col = math.floor((i - 1) / unitsPerCol)
-            row = (i - 1) % unitsPerCol
-        end
+        local col = math.floor((i - 1) / unitsPerCol)
+        local row = (i - 1) % unitsPerCol
 
         local xOfs = col * (width + currentXGap)
         local yOfs = -4 - row * (height + currentYGap)
         units[i]:SetPoint('TOPLEFT', fosterFrameDisplay, 'BOTTOMLEFT', xOfs, yOfs)
     end
 end
+
 
 local function showHideBars()
     if not FOSTERFRAMESPLAYERDATA then return end

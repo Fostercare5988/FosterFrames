@@ -43,57 +43,146 @@ if FOSTERFRAMESPLAYERDATA == nil then
     }
 end
 
--- Configuration Tabs Definition
+-- Configuration Tabs & Technical Tooltip Metadata
 local TABS_CONFIG = {
     {
         name = 'General',
         title = 'General Settings',
         checkboxes = {
-            { id = 'enableFrames', label = 'Enable Addon (Show Frames)' },
+            {
+                id = 'enableFrames',
+                label = 'Enable Addon (Show Frames)',
+                tooltipTitle = 'Enable FosterFrames',
+                tooltipText = 'Master toggle to display enemy unit frame cards and tactical combat HUD elements.'
+            },
         },
         hasScale = true,
+        scaleTitle = 'Global Frame Scale',
+        scaleTooltip = 'Scales the overall size and dimension of the FosterFrames unit grid between 0.8x and 1.5x.'
     },
     {
         name = 'Tactical',
         title = 'Tactical Features',
         checkboxes = {
-            { id = 'mouseOver',                    label = 'Enable Mouseover Cast (on Frames)' },
-            { id = 'targetFrameCastbar',           label = 'Movable Casting Bar for Target' },
-            { id = 'integratedTargetFrameCastbar', label = 'Compact Casting Bar (inside Name)' },
-            { id = 'targetDebuffTimers',           label = 'Show Timer Text on Target Debuffs' },
-            { id = 'specSpecificIcons',            label = 'Show Talent Spec Icons (instead of Class)' },
-            { id = 'ccAnnounce',                   label = 'Announce CCs to Chat (/say, /bg)' },
+            {
+                id = 'mouseOver',
+                label = 'Enable Mouseover Cast (on Frames)',
+                tooltipTitle = 'Mouseover Spellcasting',
+                tooltipText = 'Allows casting spells directly onto unit frame cards via mouseover bindings without dropping your current target.'
+            },
+            {
+                id = 'targetFrameCastbar',
+                label = 'Movable Casting Bar for Target',
+                tooltipTitle = 'Movable Target Castbar',
+                tooltipText = 'Renders an independent, movable castbar beneath your TargetFrame with spell icon, duration, and latency spark.'
+            },
+            {
+                id = 'integratedTargetFrameCastbar',
+                label = 'Compact Casting Bar (inside Name)',
+                tooltipTitle = 'Embedded Nameplate Castbar',
+                tooltipText = 'Embeds a sleek casting progress bar directly inside the default Blizzard TargetFrame nameplate background.'
+            },
+            {
+                id = 'targetDebuffTimers',
+                label = 'Show Timer Text on Target Debuffs',
+                tooltipTitle = 'Target Debuff Timers',
+                tooltipText = 'Displays numeric countdown seconds and cooldown spirals directly on TargetFrame buff and debuff icons.'
+            },
+            {
+                id = 'specSpecificIcons',
+                label = 'Show Talent Spec Icons (instead of Class)',
+                tooltipTitle = 'Talent Spec Icons',
+                tooltipText = 'Queries SuperWoW UnitSpec and talent data to display specialization icons (e.g. Shadow, Arms, Frost) instead of standard class crests.'
+            },
+            {
+                id = 'ccAnnounce',
+                label = 'Announce CCs to Chat (/say, /bg)',
+                tooltipTitle = 'Crowd Control Alerts',
+                tooltipText = 'Automatically alerts your team in /say or /battleground when your character is afflicted by major crowd control (Sap, Blind, Polymorph, Fear).'
+            },
         },
     },
     {
         name = 'Automation',
         title = 'Automation & Battlegrounds',
         checkboxes = {
-            { id = 'openWorldScanning',    label = 'Scan Players in Open World (Non-BG)' },
-            { id = 'smartDistanceSorting', label = 'Sort Frames by Distance (Closest first)' },
-            { id = 'efcDistanceTracking',  label = 'Track Distance to Flag Carrier (WSG)' },
-            { id = 'efcBGannouncement',    label = 'Alert Chat when EFC has Low Health' },
+            {
+                id = 'openWorldScanning',
+                label = 'Scan Players in Open World (Non-BG)',
+                tooltipTitle = 'Open World PvP Scanning',
+                tooltipText = 'Enables nameplate and combat log scanning outside battlegrounds to detect, track, and display hostile players in world PvP.'
+            },
+            {
+                id = 'smartDistanceSorting',
+                label = 'Sort Frames by Distance (Closest first)',
+                tooltipTitle = 'Smart Distance Sorting',
+                tooltipText = 'Continuously sorts unit frame cards by real-time 3D Euclidean distance (via UnitXP SP3), placing the closest hostiles at the top.'
+            },
+            {
+                id = 'efcDistanceTracking',
+                label = 'Track Distance to Flag Carrier (WSG)',
+                tooltipTitle = 'EFC Distance Telemetry',
+                tooltipText = 'Calculates live 3D yard distance to the Enemy Flag Carrier in Warsong Gulch and updates targeting telemetry.'
+            },
+            {
+                id = 'efcBGannouncement',
+                label = 'Alert Chat when EFC has Low Health',
+                tooltipTitle = 'EFC Low Health Announcement',
+                tooltipText = 'Automatically broadcasts an alert to the /battleground chat channel when the Enemy Flag Carrier\'s health drops below 40%, 20%, or 10% in Warsong Gulch.'
+            },
         },
     },
     {
         name = 'Appearance',
         title = 'Appearance & Layout',
         checkboxes = {
-            { id = 'displayNames',        label = 'Show Player Names on Frames' },
-            { id = 'displayManabar',      label = 'Show Mana/Rage/Energy Bar' },
-            { id = 'displayHealthValues', label = 'Show Health Numbers (UnitXP SP3)' },
-            { id = 'displayManaValues',   label = 'Show Mana Numbers (UnitXP SP3)' },
-            { id = 'displayOnlyNearby',   label = 'Hide Distant/Dead Units' },
-            { id = 'castTimers',          label = 'Show Cast Bar Timer Text' },
+            {
+                id = 'displayNames',
+                label = 'Show Player Names on Frames',
+                tooltipTitle = 'Display Player Names',
+                tooltipText = 'Displays character names on enemy unit cards (automatically hidden when Health Numbers mode is active).'
+            },
+            {
+                id = 'displayManabar',
+                label = 'Show Mana/Rage/Energy Bar',
+                tooltipTitle = 'Power Resource Bar',
+                tooltipText = 'Displays secondary resource power bars (Mana, Rage, Energy) below unit health bars.'
+            },
+            {
+                id = 'displayHealthValues',
+                label = 'Show Health Numbers (UnitXP SP3)',
+                tooltipTitle = 'Exact Health Numbers',
+                tooltipText = 'Displays exact uncapped current and maximum numerical health values (e.g. 4850 / 5200) on unit health bars via UnitXP SP3.'
+            },
+            {
+                id = 'displayManaValues',
+                label = 'Show Mana Numbers (UnitXP SP3)',
+                tooltipTitle = 'Exact Mana Numbers',
+                tooltipText = 'Displays current and maximum numerical mana values on mana-using classes.'
+            },
+            {
+                id = 'displayOnlyNearby',
+                label = 'Hide Distant/Dead Units',
+                tooltipTitle = 'Hide Out-of-Range Units',
+                tooltipText = 'Dynamically hides enemy unit frame cards when players are out of range or not detected nearby.'
+            },
+            {
+                id = 'castTimers',
+                label = 'Show Cast Bar Timer Text',
+                tooltipTitle = 'Cast Duration Timers',
+                tooltipText = 'Displays real-time numerical countdown seconds (e.g. 1.4s) on enemy casting bars.'
+            },
         },
         hasLayout = true,
+        layoutTitle = 'Frame Layout Mode',
+        layoutTooltip = 'Selects the layout arrangement for unit cards:\n• Horizontal: 1 row across\n• Horizontal Block: 5 columns x rows\n• Standard Block: 5 per group\n• Vertical Block: 2 columns\n• Vertical: 1 column down'
     }
 }
 
 local settings = CreateFrame('Frame', 'fosterFramesSettings', UIParent)
 settings:ClearAllPoints()
 settings:SetWidth(460)
-settings:SetHeight(360)
+settings:SetHeight(380)
 settings:SetFrameLevel(60)
 settings:SetPoint('CENTER', UIParent, 0, 0)
 settings:SetBackdrop({
@@ -132,7 +221,7 @@ settings.x:SetPoint('TOPRIGHT', -6, -6)
 
 -- Sidebar
 settings.sidebar = CreateFrame('Frame', nil, settings)
-settings.sidebar:SetWidth(100)
+settings.sidebar:SetWidth(104)
 settings.sidebar:SetPoint('TOPLEFT', settings, 'TOPLEFT', 11, -40)
 settings.sidebar:SetPoint('BOTTOMLEFT', settings, 'BOTTOMLEFT', 11, 11)
 settings.sidebar:SetBackdrop({ bgFile = [[Interface\Tooltips\UI-Tooltip-Background]] })
@@ -148,6 +237,16 @@ settings.content:SetBackdropColor(0.05, 0.05, 0.05, 0.5)
 -- Containers and Controls
 local containers = {}
 local checkButtons = {}
+
+local function ShowTooltip(owner, title, text)
+    if not text then return end
+    GameTooltip:SetOwner(owner, "ANCHOR_RIGHT", 4, 0)
+    if title then
+        GameTooltip:AddLine(title, 1, 0.82, 0)
+    end
+    GameTooltip:AddLine(text, 0.9, 0.9, 0.9, 1)
+    GameTooltip:Show()
+end
 
 local function CreateTabContainers()
     local playerFaction = UnitFactionGroup('player')
@@ -171,7 +270,7 @@ local function CreateTabContainers()
                 local cb = CreateFrame('CheckButton', 'fosterFramesCB_' .. tabIdx .. '_' .. cbIdx, container, 'UICheckButtonTemplate')
                 cb:SetHeight(22)
                 cb:SetWidth(22)
-                cb:SetPoint('TOPLEFT', prev, 'BOTTOMLEFT', (cbIdx == 1 and 0 or 0), (cbIdx == 1 and -10 or -6))
+                cb:SetPoint('TOPLEFT', prev, 'BOTTOMLEFT', 0, (cbIdx == 1 and -10 or -6))
 
                 local cbText = _G[cb:GetName() .. 'Text']
                 cbText:SetText(cbData.label)
@@ -179,9 +278,19 @@ local function CreateTabContainers()
                 cbText:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.9)
 
                 cb.settingId = cbData.id
+                cb.ttTitle = cbData.tooltipTitle or cbData.label
+                cb.ttText = cbData.tooltipText
+
                 cb:SetScript('OnClick', function()
                     FOSTERFRAMESPLAYERDATA[this.settingId] = this:GetChecked() and true or false
                     if FOSTERFRAMESsettings then FOSTERFRAMESsettings() end
+                end)
+
+                cb:SetScript('OnEnter', function()
+                    ShowTooltip(this, this.ttTitle, this.ttText)
+                end)
+                cb:SetScript('OnLeave', function()
+                    GameTooltip:Hide()
                 end)
 
                 table.insert(checkButtons, cb)
@@ -197,7 +306,7 @@ local function CreateTabContainers()
             scaleLabel:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.9)
 
             local scaleSlider = CreateFrame('Slider', 'fosterFramesScaleSlider', container, 'OptionsSliderTemplate')
-            scaleSlider:SetWidth(200)
+            scaleSlider:SetWidth(210)
             scaleSlider:SetHeight(16)
             scaleSlider:SetPoint('TOPLEFT', scaleLabel, 'BOTTOMLEFT', 5, -8)
             scaleSlider:SetMinMaxValues(0.8, 1.5)
@@ -213,6 +322,12 @@ local function CreateTabContainers()
                     fosterFrameDisplay:SetScale(val)
                 end
             end)
+
+            scaleSlider:SetScript('OnEnter', function()
+                ShowTooltip(this, tabData.scaleTitle or 'Frame Scale', tabData.scaleTooltip)
+            end)
+            scaleSlider:SetScript('OnLeave', function() GameTooltip:Hide() end)
+
             container.scaleSlider = scaleSlider
         end
 
@@ -224,7 +339,7 @@ local function CreateTabContainers()
             layoutLabel:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.9)
 
             local layoutSlider = CreateFrame('Slider', 'fosterFramesLayoutSlider', container, 'OptionsSliderTemplate')
-            layoutSlider:SetWidth(200)
+            layoutSlider:SetWidth(210)
             layoutSlider:SetHeight(16)
             layoutSlider:SetPoint('TOPLEFT', layoutLabel, 'BOTTOMLEFT', 5, -8)
             layoutSlider:SetMinMaxValues(0, 4)
@@ -241,6 +356,12 @@ local function CreateTabContainers()
                 FOSTERFRAMESPLAYERDATA['groupsize'] = groupMap[v] or 5
                 if FOSTERFRAMESsettings then FOSTERFRAMESsettings() end
             end)
+
+            layoutSlider:SetScript('OnEnter', function()
+                ShowTooltip(this, tabData.layoutTitle or 'Layout Mode', tabData.layoutTooltip)
+            end)
+            layoutSlider:SetScript('OnLeave', function() GameTooltip:Hide() end)
+
             container.layoutSlider = layoutSlider
         end
     end
@@ -267,10 +388,10 @@ end
 settings.tabs = {}
 for i, tabData in ipairs(TABS_CONFIG) do
     local btn = CreateFrame('Button', 'fosterFramesTabBtn' .. i, settings.sidebar, 'UIPanelButtonTemplate')
-    btn:SetWidth(90)
+    btn:SetWidth(94)
     btn:SetHeight(24)
     btn:SetText(tabData.name)
-    btn:SetPoint('TOP', settings.sidebar, 'TOP', 0, -10 - (i - 1) * 30)
+    btn:SetPoint('TOP', settings.sidebar, 'TOP', 0, -10 - (i - 1) * 28)
     btn.tabIdx = i
 
     btn:SetScript('OnClick', function()
@@ -281,11 +402,31 @@ for i, tabData in ipairs(TABS_CONFIG) do
     settings.tabs[i] = btn
 end
 
+-- Test Mode Button (Live Preview)
+settings.testBtn = CreateFrame('Button', 'fosterFramesSettingsTestButton', settings.sidebar, 'UIPanelButtonTemplate')
+settings.testBtn:SetWidth(94)
+settings.testBtn:SetHeight(24)
+settings.testBtn:SetPoint('BOTTOM', settings.sidebar, 'BOTTOM', 0, 68)
+settings.testBtn:SetText('Test Mode')
+settings.testBtn:SetScript('OnClick', function()
+    local nextState = not FOSTERFRAMES_TESTMODE
+    FOSTERFRAMES_SetTestMode(nextState)
+    if nextState then
+        this:SetText('Test: ON')
+    else
+        this:SetText('Test: OFF')
+    end
+end)
+settings.testBtn:SetScript('OnEnter', function()
+    ShowTooltip(this, 'Live Preview Mode', 'Populates realistic dummy enemy frames with active health/mana bars, castbars, debuffs, and raid targets to preview your settings in real-time.')
+end)
+settings.testBtn:SetScript('OnLeave', function() GameTooltip:Hide() end)
+
 -- Unlock/Lock Position Button
 settings.unlock = CreateFrame('Button', 'fosterFramesSettingsUnlockButton', settings.sidebar, 'UIPanelButtonTemplate')
-settings.unlock:SetWidth(90)
+settings.unlock:SetWidth(94)
 settings.unlock:SetHeight(24)
-settings.unlock:SetPoint('BOTTOM', settings.sidebar, 'BOTTOM', 0, 40)
+settings.unlock:SetPoint('BOTTOM', settings.sidebar, 'BOTTOM', 0, 39)
 settings.unlock:SetText(FOSTERFRAMESPLAYERDATA['frameMovable'] and 'Lock' or 'Unlock')
 settings.unlock:SetScript('OnClick', function()
     FOSTERFRAMESPLAYERDATA['frameMovable'] = not FOSTERFRAMESPLAYERDATA['frameMovable']
@@ -295,10 +436,14 @@ settings.unlock:SetScript('OnClick', function()
     end
     if FOSTERFRAMESsettings then FOSTERFRAMESsettings() end
 end)
+settings.unlock:SetScript('OnEnter', function()
+    ShowTooltip(this, 'Lock / Unlock Frames', 'When unlocked, enables dragging the FosterFrames container across your screen with the mouse.')
+end)
+settings.unlock:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
 -- Reset Position Button
 settings.reset = CreateFrame('Button', 'fosterFramesSettingsResetButton', settings.sidebar, 'UIPanelButtonTemplate')
-settings.reset:SetWidth(90)
+settings.reset:SetWidth(94)
 settings.reset:SetHeight(24)
 settings.reset:SetPoint('BOTTOM', settings.sidebar, 'BOTTOM', 0, 10)
 settings.reset:SetText('Reset Pos')
@@ -308,8 +453,12 @@ settings.reset:SetScript('OnClick', function()
         fosterFrameDisplay:SetPoint('CENTER', UIParent, 0, 100)
     end
     FOSTERFRAMESPLAYERDATA['offX'] = 0
-    FOSTERFRAMESPLAYERDATA['offY'] = 0
+    FOSTERFRAMESPLAYERDATA['offY'] = 100
 end)
+settings.reset:SetScript('OnEnter', function()
+    ShowTooltip(this, 'Reset Position', 'Resets the frame grid location to the default screen center.')
+end)
+settings.reset:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
 local function setupSettings()
     if #containers == 0 then
@@ -324,12 +473,20 @@ local function setupSettings()
 
     settings:Show()
     settings.unlock:SetText(FOSTERFRAMESPLAYERDATA['frameMovable'] and 'Lock' or 'Unlock')
+    settings.testBtn:SetText(FOSTERFRAMES_TESTMODE and 'Test: ON' or 'Test: OFF')
+
+    -- Automatically activate test preview when opening settings for immediate visual feedback
+    FOSTERFRAMES_SetTestMode(true)
+    settings.testBtn:SetText('Test: ON')
 
     if FOSTERFRAMESsettings then FOSTERFRAMESsettings() end
     if TARGETFRAMECASTBARsettings then TARGETFRAMECASTBARsettings(true) end
 end
 
 local function closeSettings()
+    if not FOSTERFRAMES_DEBUG then
+        FOSTERFRAMES_SetTestMode(false)
+    end
     if FOSTERFRAMESPLAYERDATA and not FOSTERFRAMESPLAYERDATA['enableFrames'] and fosterFrameDisplay then
         fosterFrameDisplay:Hide()
     end
@@ -359,7 +516,7 @@ eventFrame:SetScript('OnEvent', function()
         if fosterFrameDisplay then
             local _, _, _, xOfs, yOfs = fosterFrameDisplay:GetPoint()
             FOSTERFRAMESPLAYERDATA['offX'] = xOfs or 0
-            FOSTERFRAMESPLAYERDATA['offY'] = yOfs or 0
+            FOSTERFRAMESPLAYERDATA['offY'] = yOfs or 100
         end
     end
 end)
@@ -369,8 +526,8 @@ SLASH_FOSTERFRAMES1 = '/ff'
 SLASH_FOSTERFRAMES2 = '/fosterframes'
 SLASH_FOSTERFRAMES3 = '/ffs'
 SlashCmdList["FOSTERFRAMES"] = function(msg)
-    if msg == 'debug' or msg == 'cd' then
-        FOSTERFRAMES_DebugCooldownTest()
+    if msg == 'debug' or msg == 'cd' or msg == 'test' then
+        FOSTERFRAMES_SetTestMode(not FOSTERFRAMES_TESTMODE)
     elseif msg == 'hide' then
         FOSTERFRAMES_HideFrames()
     elseif msg == 'data' then
@@ -384,4 +541,5 @@ SlashCmdList["FOSTERFRAMES"] = function(msg)
         end
     end
 end
+
 

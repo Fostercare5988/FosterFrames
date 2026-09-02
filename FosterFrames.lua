@@ -26,6 +26,7 @@ local raidIcons, raidIconsN = { [1] = 'skull', [2] = 'moon', [3] = 'square', [4]
 
 local enabled = false
 FOSTERFRAMES_DEBUG = false
+FOSTERFRAMES_TESTMODE = false
 MOUSEOVERUNINAME = nil
 
 local BACKDROP = { bgFile = [[Interface\Tooltips\UI-Tooltip-Background]] }
@@ -56,7 +57,7 @@ fosterFrame:EnableMouse(true)
 
 fosterFrame.bg = fosterFrame:CreateTexture(nil, 'BACKGROUND')
 fosterFrame.bg:SetAllPoints()
-fosterFrame.bg:SetTexture(0, 0, 0, 0.5)
+fosterFrame.bg:SetTexture(0, 0, 0, 0.6)
 fosterFrame.bg:Hide()
 
 fosterFrame.Title = fosterFrame:CreateFontString(nil, 'OVERLAY')
@@ -67,71 +68,6 @@ fosterFrame.totalPlayers = fosterFrame:CreateFontString(nil, 'OVERLAY')
 fosterFrame.totalPlayers:SetFont(STANDARD_TEXT_FONT, 12, 'OUTLINE')
 fosterFrame.totalPlayers:SetPoint('RIGHT', fosterFrame, 'RIGHT', -4, 1)
 fosterFrame.totalPlayers:Hide()
-
-fosterFrame.spawnText = fosterFrame:CreateFontString(nil, 'OVERLAY')
-fosterFrame.spawnText:SetFont(STANDARD_TEXT_FONT, 16, 'OUTLINE')
-fosterFrame.spawnText:SetPoint('LEFT', fosterFrame, 'LEFT', 8, 1)
-
-fosterFrame.spawnText.Button = CreateFrame('Button', nil, fosterFrame)
-fosterFrame.spawnText.Button:SetHeight(15)
-fosterFrame.spawnText.Button:SetWidth(15)
-fosterFrame.spawnText.Button:SetPoint('CENTER', fosterFrame.spawnText, 'CENTER')
-fosterFrame.spawnText.Button:SetScript('OnEnter', function()
-    fosterFrame.spawnText:SetTextColor(0.9, 0.9, 0.4)
-    GameTooltip:SetOwner(this, "ANCHOR_TOPRIGHT", -30, -30)
-    GameTooltip:SetText(fosterFrame.spawnText.Button.tt or "Lock/Unlock")
-    GameTooltip:Show()
-end)
-fosterFrame.spawnText.Button:SetScript('OnLeave', function()
-    fosterFrame.spawnText:SetTextColor(enemyFactionColor.r, enemyFactionColor.g, enemyFactionColor.b, 0.9)
-    GameTooltip:Hide()
-end)
-
--- EFC Button
-fosterFrame.efcButton = CreateFrame('Button', nil, fosterFrame)
-fosterFrame.efcButton:SetHeight(15)
-fosterFrame.efcButton:SetWidth(15)
-fosterFrame.efcButton:SetPoint('LEFT', fosterFrame.Title, 'RIGHT', 2, 0)
-fosterFrame.efcButton:SetScript('OnEnter', function()
-    GameTooltip:SetOwner(this, "ANCHOR_TOPRIGHT", -30, -30)
-    if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['efcDistanceTracking'] then
-        local name, dist = FOSTERFRAMECOREGetEFCDistance()
-        if name then
-            GameTooltip:SetText('EFC: ' .. name .. ' (' .. dist .. ')')
-        else
-            GameTooltip:SetText('EFC: Unknown')
-        end
-    else
-        GameTooltip:SetText('Toggle EFC Low Health Announcement')
-    end
-    GameTooltip:Show()
-end)
-fosterFrame.efcButton:SetScript('OnLeave', function() GameTooltip:Hide() end)
-
-fosterFrame.efcButton.flagTexture = fosterFrame.efcButton:CreateTexture(nil, 'ARTWORK')
-fosterFrame.efcButton.flagTexture:SetAllPoints()
-
-fosterFrame.efcButton.distText = fosterFrame.efcButton:CreateFontString(nil, 'OVERLAY')
-fosterFrame.efcButton.distText:SetFont(STANDARD_TEXT_FONT, 10, 'OUTLINE')
-fosterFrame.efcButton.distText:SetPoint('LEFT', fosterFrame.efcButton, 'RIGHT', 2, 0)
-fosterFrame.efcButton.distText:SetTextColor(1, 1, 1)
-
--- Top / Bottom Header Frames
-fosterFrame.top = CreateFrame('Frame', nil, fosterFrame)
-fosterFrame.top:SetFrameLevel(0)
-fosterFrame.top:ClearAllPoints()
-fosterFrame.top:SetHeight(fosterFrame:GetHeight())
-fosterFrame.top:SetBackdrop(BACKDROP)
-fosterFrame.top:SetBackdropColor(0, 0, 0, 0.6)
-fosterFrame.top.border = CreateBorder(nil, fosterFrame.top, 13)
-
-fosterFrame.bottom = CreateFrame('Frame', nil, fosterFrame)
-fosterFrame.bottom:SetFrameLevel(0)
-fosterFrame.bottom:ClearAllPoints()
-fosterFrame.bottom:SetHeight(fosterFrame:GetHeight())
-fosterFrame.bottom:SetBackdrop(BACKDROP)
-fosterFrame.bottom:SetBackdropColor(0, 0, 0, 0.6)
-fosterFrame.bottom.border = CreateBorder(nil, fosterFrame.bottom, 13)
 
 -- Raid Target Indicator Frame
 fosterFrame.raidTargetFrame = CreateFrame('Frame', nil, fosterFrame)
@@ -255,15 +191,105 @@ for i = 1, unitLimit do
     end)
 end
 
-local function defaultVisuals()
+-- Mock Test Data Definition
+local TEST_UNITS = {
+    { name = "Gladiator", class = "WARRIOR", powerType = "rage",   hp = 4850, maxHp = 5200, mana = 65,   maxMana = 100, spell = "Mortal Strike", icon = [[Interface\Icons\Ability_Warrior_SavageBlow]],   cast = 0,   castMax = 0,   tarCount = 3, iconCoord = {0.75, 1, 0.25, 0.5} },
+    { name = "HolyHeals", class = "PRIEST",  powerType = "mana",   hp = 3120, maxHp = 4100, mana = 2800, maxMana = 4900, spell = "Greater Heal",  icon = [[Interface\Icons\Spell_Holy_GreaterHeal]],       cast = 1.4, castMax = 2.5, tarCount = 2, iconCoord = nil },
+    { name = "FrostBite", class = "MAGE",    powerType = "mana",   hp = 2950, maxHp = 3800, mana = 3400, maxMana = 5400, spell = "Polymorph",     icon = [[Interface\Icons\Spell_Nature_Polymorph]],       cast = 0.8, castMax = 1.5, tarCount = 1, iconCoord = nil },
+    { name = "ShadowCut", class = "ROGUE",   powerType = "energy", hp = 3400, maxHp = 4400, mana = 100,  maxMana = 100,  spell = nil,             icon = nil,                                              cast = 0,   castMax = 0,   tarCount = 0, iconCoord = nil },
+    { name = "MoonFire",  class = "DRUID",   powerType = "mana",   hp = 3800, maxHp = 4600, mana = 2100, maxMana = 4200, spell = "Entangling Roots", icon = [[Interface\Icons\Spell_Nature_Stranglevines]], cast = 0.6, castMax = 1.5, tarCount = 1, iconCoord = nil },
+    { name = "DarkChaos", class = "WARLOCK", powerType = "mana",   hp = 4100, maxHp = 5000, mana = 3600, maxMana = 5100, spell = "Fear",             icon = [[Interface\Icons\Spell_Shadow_Possession]],       cast = 1.1, castMax = 1.5, tarCount = 0, iconCoord = nil },
+    { name = "EagleEye",  class = "HUNTER",  powerType = "mana",   hp = 3600, maxHp = 4500, mana = 1900, maxMana = 3800, spell = "Aimed Shot",      icon = [[Interface\Icons\Inv_spear_07]],                  cast = 1.8, castMax = 3.0, tarCount = 0, iconCoord = nil },
+    { name = "Thunder",   class = "SHAMAN",  powerType = "mana",   hp = 3900, maxHp = 4700, mana = 2200, maxMana = 4400, spell = "Chain Lightning", icon = [[Interface\Icons\Spell_Nature_ChainLightning]],  cast = 1.2, castMax = 2.0, tarCount = 1, iconCoord = nil },
+    { name = "Avenger",   class = "PALADIN", powerType = "mana",   hp = 4200, maxHp = 5100, mana = 2500, maxMana = 4600, spell = "Holy Light",      icon = [[Interface\Icons\Spell_Holy_HolyBolt]],          cast = 1.6, castMax = 2.5, tarCount = 0, iconCoord = nil },
+    { name = "Bladestorm",class = "WARRIOR", powerType = "rage",   hp = 2200, maxHp = 5400, mana = 25,   maxMana = 100,  spell = nil,             icon = nil,                                              cast = 0,   castMax = 0,   tarCount = 4, iconCoord = {0, 0.25, 0, 0.25} },
+}
+
+local function renderTestVisuals()
+    local count = #TEST_UNITS
     for i = 1, unitLimit do
-        units[i].ffCastbar.icon:SetTexture([[Interface\Icons\Inv_misc_gem_sapphire_01]])
-        units[i].ffCastbar.text:SetText('Entangling Roots')
-        units[i].name:SetText('Player' .. i)
-        units[i].raidTarget.icon:SetTexCoord(0.75, 1, 0.25, 0.5)
-        units[i].cc.icon:SetTexture([[Interface\characterframe\TEMPORARYPORTRAIT-MALE-ORC]])
-        units[i].cc.duration:SetText('2.8')
-        units[i]:Show()
+        if i <= count then
+            local data = TEST_UNITS[i]
+            local clr = RAID_CLASS_COLORS[data.class] or RAID_CLASS_COLORS['WARRIOR']
+            local pClr = RGB_POWER_COLORS[data.powerType] or RGB_POWER_COLORS['mana']
+
+            units[i].name:SetText(data.name)
+            units[i].tar = data.name
+            units[i].guid = "0xTEST" .. i
+            units[i].hoverEnabled = true
+
+            units[i].hpbar:SetStatusBarColor(clr.r, clr.g, clr.b)
+            units[i].manabar:SetStatusBarColor(pClr[1], pClr[2], pClr[3])
+
+            units[i].hpbar:SetMinMaxValues(0, data.maxHp)
+            units[i].hpbar:SetValue(data.hp)
+
+            units[i].manabar:SetMinMaxValues(0, data.maxMana)
+            units[i].manabar:SetValue(data.mana)
+
+            if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayHealthValues'] then
+                units[i].hpText:SetText(data.hp .. " / " .. data.maxHp)
+                units[i].hpText:Show()
+                units[i].name:Hide()
+            else
+                units[i].hpText:Hide()
+                if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayNames'] then
+                    units[i].name:Show()
+                else
+                    units[i].name:Hide()
+                end
+            end
+
+            if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManaValues'] then
+                if data.powerType == 'mana' then
+                    units[i].manaText:SetText(data.mana .. " / " .. data.maxMana)
+                    units[i].manaText:Show()
+                else
+                    units[i].manaText:SetText("")
+                    units[i].manaText:Hide()
+                end
+            else
+                units[i].manaText:Hide()
+            end
+
+            -- CC / Spec Icon
+            units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', data.class))
+            units[i].cc.icon:SetVertexColor(1, 1, 1, 1)
+
+            -- Target Count
+            if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['targetCounter'] and data.tarCount > 0 then
+                units[i].targetCount.text:SetText(data.tarCount)
+                units[i].targetCount.text:Show()
+            else
+                units[i].targetCount.text:SetText("")
+                units[i].targetCount.text:Hide()
+            end
+
+            -- Raid Icon
+            if data.iconCoord then
+                units[i].raidTarget.icon:SetTexCoord(data.iconCoord[1], data.iconCoord[2], data.iconCoord[3], data.iconCoord[4])
+                units[i].raidTarget:Show()
+            else
+                units[i].raidTarget:Hide()
+            end
+
+            -- Cast Bar
+            if data.spell and data.cast > 0 then
+                units[i].ffCastbar:SetMinMaxValues(0, data.castMax)
+                units[i].ffCastbar:SetValue(data.castMax - data.cast)
+                units[i].ffCastbar.text:SetText(data.spell)
+                units[i].ffCastbar.timer:SetText(data.cast .. "s")
+                units[i].ffCastbar.icon:SetTexture(data.icon)
+                units[i].ffCastbar.b:SetColor(0.1, 0.1, 0.1)
+                units[i].ffCastbar:Show()
+            else
+                units[i].ffCastbar:Hide()
+            end
+
+            units[i]:Show()
+        else
+            units[i]:Hide()
+        end
     end
 end
 
@@ -333,18 +359,13 @@ end
 
 local function showHideBars()
     if not FOSTERFRAMESPLAYERDATA then return end
-    if FOSTERFRAMESPLAYERDATA['frameMovable'] then
-        fosterFrameDisplay.spawnText.Button.tt = 'Lock'
-        fosterFrameDisplay.top:Show()
-        fosterFrameDisplay.bottom:Show()
-        fosterFrameDisplay.spawnText:SetText('-')
+    local isUnlocked = FOSTERFRAMESPLAYERDATA['frameMovable'] or (fosterFramesSettings and fosterFramesSettings:IsShown())
+    if isUnlocked then
+        fosterFrameDisplay.bg:Show()
     else
-        fosterFrameDisplay.spawnText.Button.tt = 'Unlock'
-        fosterFrameDisplay.top:Hide()
-        fosterFrameDisplay.bottom:Hide()
-        fosterFrameDisplay.spawnText:SetText('+')
+        fosterFrameDisplay.bg:Hide()
     end
-    fosterFrameDisplay:EnableMouse(FOSTERFRAMESPLAYERDATA['frameMovable'])
+    fosterFrameDisplay:EnableMouse(isUnlocked)
 end
 
 local function SetupFrames(maxU)
@@ -361,7 +382,6 @@ local function SetupFrames(maxU)
     end
 
     fosterFrameDisplay.Title:SetTextColor(enemyFactionColor.r, enemyFactionColor.g, enemyFactionColor.b, 0.9)
-    fosterFrameDisplay.spawnText:SetTextColor(enemyFactionColor.r, enemyFactionColor.g, enemyFactionColor.b, 0.9)
     fosterFrameDisplay.totalPlayers:SetTextColor(enemyFactionColor.r, enemyFactionColor.g, enemyFactionColor.b, 0.9)
 
     local layout = FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['layout'] or 'block'
@@ -372,47 +392,16 @@ local function SetupFrames(maxU)
     if col < 1 then col = 1 end
 
     fosterFrameDisplay:SetWidth((unitWidth + ccIconWidth + 5) * col + leftSpacing * (col - 1))
-    fosterFrameDisplay.top:SetWidth(fosterFrameDisplay:GetWidth())
-    fosterFrameDisplay.top:SetPoint('CENTER', fosterFrameDisplay, 'CENTER', 0, 0)
-
-    fosterFrameDisplay.spawnText.Button:SetScript('OnClick', function()
-        FOSTERFRAMESPLAYERDATA['frameMovable'] = not FOSTERFRAMESPLAYERDATA['frameMovable']
-        showHideBars()
-        GameTooltip:SetOwner(this, "ANCHOR_TOPRIGHT", -30, -60)
-        GameTooltip:SetText(fosterFrameDisplay.spawnText.Button.tt)
-        GameTooltip:Show()
-    end)
-
-    fosterFrameDisplay.efcButton.flagTexture:SetTexture('Interface\\WorldStateFrame\\' .. (playerFaction or 'Alliance') .. 'Flag')
-    fosterFrameDisplay.efcButton:SetScript('OnClick', function()
-        FOSTERFRAMESPLAYERDATA['efcBGannouncement'] = not FOSTERFRAMESPLAYERDATA['efcBGannouncement']
-        local clr = FOSTERFRAMESPLAYERDATA['efcBGannouncement'] and 1 or 0.3
-        fosterFrameDisplay.efcButton.flagTexture:SetVertexColor(clr, clr, clr)
-    end)
-
-    local clr = (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['efcBGannouncement']) and 1 or 0.3
-    fosterFrameDisplay.efcButton.flagTexture:SetVertexColor(clr, clr, clr)
 
     showHideBars()
 
-    fosterFrameDisplay.bottom:SetWidth(fosterFrameDisplay:GetWidth())
-    local unitPointBottom = (layout == 'hblock' and maxUnits - 4)
-        or (layout == 'vblock' and ((maxUnits % 2 == 0) and maxUnits - 1 or maxUnits))
-        or (layout == 'vertical' and maxUnits)
-        or (maxUnits < groupSize and maxUnits)
-        or groupSize
-
-    if unitPointBottom < 1 then unitPointBottom = 1 end
-    if units[unitPointBottom] then
-        fosterFrameDisplay.bottom:SetPoint('TOPLEFT', units[unitPointBottom].ffCastbar.iconborder, 'BOTTOMLEFT', 1, -6)
-    end
-
-    if FOSTERFRAMES_DEBUG then
-        for i = 1, maxUnits do units[i]:Show() end
+    if FOSTERFRAMES_DEBUG or FOSTERFRAMES_TESTMODE then
+        renderTestVisuals()
     end
 end
 
 local function drawUnits(list)
+    if FOSTERFRAMES_TESTMODE then return end
     fosterFrame.uiList = list or {}
     local i = 1
 
@@ -506,6 +495,7 @@ local function drawUnits(list)
 end
 
 local function updateUnits()
+    if FOSTERFRAMES_TESTMODE then return end
     local now = GetTime()
     if rtMenuEndtime < now then fosterFrame.raidTargetMenu:Hide() end
     if not fosterFrame.uiList then return end
@@ -590,20 +580,10 @@ end
 local function fosterFramesOnUpdate()
     nextRefresh = nextRefresh - (arg1 or 0.016)
     if nextRefresh <= 0 then
-        raidTargets = FOSTERFRAMECOREGetRaidTarget() or {}
-        updateUnits()
-
-        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['efcDistanceTracking'] and fosterFrame.efcButton:IsShown() then
-            local name, dist = FOSTERFRAMECOREGetEFCDistance()
-            if name and dist ~= 'unknown' then
-                fosterFrame.efcButton.distText:SetText(dist)
-            else
-                fosterFrame.efcButton.distText:SetText('')
-            end
-        else
-            fosterFrame.efcButton.distText:SetText('')
+        if not FOSTERFRAMES_TESTMODE then
+            raidTargets = FOSTERFRAMECOREGetRaidTarget() or {}
+            updateUnits()
         end
-
         nextRefresh = refreshInterval
     end
 end
@@ -611,7 +591,9 @@ end
 --- Global Entry Points ---
 
 function FOSTERFRAMESUpdatePlayers(list)
-    drawUnits(list)
+    if not FOSTERFRAMES_TESTMODE then
+        drawUnits(list)
+    end
 end
 
 function FOSTERFRAMESInitialize(maxU, isBG)
@@ -624,13 +606,7 @@ function FOSTERFRAMESInitialize(maxU, isBG)
         optionals()
         enabled = true
 
-        if insideBG and GetZoneText() == 'Warsong Gulch' then
-            fosterFrame.efcButton:Show()
-        else
-            fosterFrame.efcButton:Hide()
-        end
-
-        if (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['enableFrames']) or insideBG then
+        if (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['enableFrames']) or insideBG or FOSTERFRAMES_TESTMODE then
             fosterFrame:Show()
         else
             fosterFrame:Hide()
@@ -643,28 +619,39 @@ end
 
 function FOSTERFRAMESsettings()
     optionals()
-    if not enabled or (not insideBG and (fosterFramesSettings and fosterFramesSettings:IsShown())) then
-        SetupFrames(15)
-        defaultVisuals()
-        fosterFrame.efcButton:Show()
-        fosterFrame.efcButton.distText:SetText((FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['efcDistanceTracking']) and '< 28yd' or '')
+    if FOSTERFRAMES_TESTMODE or not enabled or (not insideBG and (fosterFramesSettings and fosterFramesSettings:IsShown())) then
+        SetupFrames(10)
+        renderTestVisuals()
     else
         SetupFrames(maxUnits)
-        if insideBG and GetZoneText() == 'Warsong Gulch' then
-            fosterFrame.efcButton:Show()
-        else
-            fosterFrame.efcButton:Hide()
-        end
     end
     arrangeUnits()
-    if (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['enableFrames']) or insideBG then
+    if (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['enableFrames']) or insideBG or FOSTERFRAMES_TESTMODE then
         fosterFrame:Show()
     else
         fosterFrame:Hide()
     end
 
-    if not enabled and not (fosterFramesSettings and fosterFramesSettings:IsShown()) then
+    if not enabled and not FOSTERFRAMES_TESTMODE and not (fosterFramesSettings and fosterFramesSettings:IsShown()) then
         for i = 1, unitLimit do units[i]:Hide() end
+    end
+end
+
+function FOSTERFRAMES_SetTestMode(enable)
+    FOSTERFRAMES_TESTMODE = enable and true or false
+    if FOSTERFRAMES_TESTMODE then
+        SetupFrames(10)
+        arrangeUnits()
+        optionals()
+        renderTestVisuals()
+        fosterFrame:Show()
+    else
+        if not insideBG and not (fosterFramesSettings and fosterFramesSettings:IsShown()) then
+            for i = 1, unitLimit do units[i]:Hide() end
+            fosterFrame:Hide()
+        else
+            FOSTERFRAMESsettings()
+        end
     end
 end
 
@@ -681,39 +668,14 @@ function FOSTERFRAMES_DebugDisplayPlayerData()
 end
 
 function FOSTERFRAMES_DebugCooldownTest()
-    FOSTERFRAMES_DEBUG = true
-    local classes = { 'WARRIOR', 'PALADIN', 'HUNTER', 'ROGUE', 'PRIEST', 'SHAMAN', 'MAGE', 'WARLOCK', 'DRUID' }
-    local powers = { 'rage', 'mana', 'mana', 'energy', 'mana', 'mana', 'mana', 'mana', 'mana' }
-
-    for i = 1, unitLimit do
-        local c = classes[((i - 1) % 9) + 1]
-        local p = powers[((i - 1) % 9) + 1]
-
-        units[i].name:SetText('Dummy' .. i)
-
-        local colour = RAID_CLASS_COLORS[c] or RAID_CLASS_COLORS['WARRIOR']
-        local powerColor = RGB_POWER_COLORS[p] or RGB_POWER_COLORS['mana']
-
-        units[i].hpbar:SetStatusBarColor(colour.r, colour.g, colour.b)
-        units[i].manabar:SetStatusBarColor(powerColor[1], powerColor[2], powerColor[3])
-        units[i].hpbar:SetMinMaxValues(0, 100)
-        units[i].hpbar:SetValue(math.random(20, 100))
-        units[i].manabar:SetMinMaxValues(0, 100)
-        units[i].manabar:SetValue(math.random(20, 100))
-
-        units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', c))
-        units[i].cc.cd:SetTimers(GetTime(), GetTime() + 8)
-        units[i].cc.cd:Show()
-        units[i]:Show()
-    end
-    fosterFrameDisplay:Show()
-    fosterFrameDisplay.Title:SetText('DEBUG MODE')
-    fosterFrameDisplay.bg:Show()
+    FOSTERFRAMES_SetTestMode(true)
 end
 
 function FOSTERFRAMES_HideFrames()
+    FOSTERFRAMES_SetTestMode(false)
     FOSTERFRAMES_DEBUG = false
     for i = 1, unitLimit do units[i]:Hide() end
     if fosterFrameDisplay then fosterFrameDisplay:Hide() end
 end
+
 

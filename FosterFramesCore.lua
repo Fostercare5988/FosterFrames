@@ -59,9 +59,9 @@ local f = CreateFrame('Frame', 'fosterFramesCore', UIParent)
 
 -- Helper: Query exact distance via UnitXP SP3
 local function getExactDistance(unit)
-    if not unit or not UnitExists(unit) then return nil end
+    if not unit or unit == "" then return nil end
     local ok, d = pcall(UnitXP, "distance", unit)
-    if ok and type(d) == "number" and d > 0 and d < 9999 then
+    if ok and type(d) == "number" and d >= 0 and d < 9999 then
         return FosterFrames.Helpers.Round(d, 0)
     end
     return nil
@@ -322,6 +322,21 @@ local function updatePlayerListInfo(now)
             or cachedRaidTargets[v.name]
             or nil
 
+        -- Exact distance query via unitID, name, or guid (UnitXP SP3)
+        local dist = (unitID and getExactDistance(unitID)) or getExactDistance(v.name) or (v.guid and getExactDistance(v.guid))
+        if dist then
+            if v.distance ~= dist then
+                v.distance = dist
+                refreshUnits = true
+            end
+            v.nearby = (dist <= 80)
+            v.nextCheck = nextCheck
+        else
+            if v.distance ~= 999 then
+                v.distance = 999
+            end
+        end
+
         v.castinfo = SPELLCASTINGCOREgetCast(v.name, unitID)
         local buffList = SPELLCASTINGCOREgetBuffs(v.name, unitID)
 
@@ -403,16 +418,16 @@ local function orderUnitsforOutput()
     end
 
     table.sort(list, function(a, b)
-        if a.nearby ~= b.nearby then
-            return a.nearby
-        end
-
         if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['smartDistanceSorting'] then
             local distA = a.distance or 999
             local distB = b.distance or 999
             if distA ~= distB then
                 return distA < distB
             end
+        end
+
+        if a.nearby ~= b.nearby then
+            return a.nearby
         end
 
         local aClass = a.class or 'WARRIOR'

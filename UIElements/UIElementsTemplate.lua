@@ -4,8 +4,8 @@
 local TEXTURE  = [[Interface\AddOns\FosterFrames\globals\resources\barTexture]]
 local BACKDROP = { bgFile = [[Interface\Tooltips\UI-Tooltip-Background]] }
 
-local unitWidth, unitHeight = 126, 35
-local hpWidth, hpHeight = 72, 18
+local unitWidth, unitHeight = 126, 24
+local hpWidth, hpHeight = 100, 18
 local manaBarHeight = 5
 local iconSize = 23
 local castBarHeight = 9
@@ -23,7 +23,7 @@ function CreateEnemyUnitFrame(name, parentFrame)
 
     btn.border = CreateBorder(nil, btn, 12.8, 1 / 4.5)
 
-    -- Health status bar
+    -- Health status bar (100 x 18)
     btn.hpbar = CreateFrame('StatusBar', nil, btn)
     btn.hpbar:SetFrameLevel(1)
     btn.hpbar:SetStatusBarTexture(TEXTURE)
@@ -35,7 +35,7 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.hpbar:SetBackdropColor(0, 0, 0, 0.6)
     SmoothBar(btn.hpbar)
 
-    -- Mana status bar
+    -- Mana status bar (100 x 5)
     btn.manabar = CreateFrame('StatusBar', nil, btn)
     btn.manabar:SetFrameLevel(1)
     btn.manabar:SetStatusBarTexture(TEXTURE)
@@ -46,7 +46,7 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.manabar:SetBackdropColor(0, 0, 0, 0.6)
     SmoothBar(btn.manabar)
 
-    -- CC / Class / Spec icon
+    -- CC / Class / Spec icon (23 x 23 flush on right side)
     btn.cc = CreateFrame('Frame', name .. 'CC', btn)
     btn.cc:SetWidth(iconSize)
     btn.cc:SetHeight(iconSize)
@@ -77,35 +77,16 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.cc.cd = CreateCooldown(btn.cc, 0.58, true)
     btn.cc.cd:SetAlpha(1)
 
-    -- Trinket icon
-    btn.trinket = CreateFrame('Frame', name .. 'Trinket', btn)
-    btn.trinket:SetWidth(iconSize)
-    btn.trinket:SetHeight(iconSize)
-    btn.trinket:SetPoint('TOPLEFT', btn, 'TOPLEFT', hpWidth + iconSize + 6, 0)
-
-    btn.trinket.border = CreateBorder(nil, btn.trinket, 12.8, 1 / 4.5)
-    btn.trinket.border:SetFrameLevel(5)
-
-    btn.trinket.icon = btn.trinket:CreateTexture(nil, 'ARTWORK')
-    btn.trinket.icon:SetAllPoints()
-    btn.trinket.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-
-    btn.trinket.bg = btn.trinket:CreateTexture(nil, 'BACKGROUND')
-    btn.trinket.bg:SetTexture(0, 0, 0, 0.6)
-    btn.trinket.bg:SetAllPoints()
-
-    btn.trinket.cd = CreateCooldown(btn.trinket, 0.58, true)
-    btn.trinket.cd:SetAlpha(1)
-
-    -- Cast bar
+    -- Cast bar (Attaches beneath card when casting)
     btn.ffCastbar = CreateFrame('StatusBar', nil, btn)
     btn.ffCastbar:SetStatusBarTexture(TEXTURE)
     btn.ffCastbar:SetHeight(castBarHeight)
-    btn.ffCastbar:SetWidth(unitWidth - castBarHeight - 3)
+    btn.ffCastbar:SetWidth(unitWidth - castBarHeight - 2)
     btn.ffCastbar:SetStatusBarColor(1, 0.4, 0)
-    btn.ffCastbar:SetPoint('TOPLEFT', btn, 'TOPLEFT', castBarHeight + 2, -(iconSize + 2))
+    btn.ffCastbar:SetPoint('TOPLEFT', btn, 'BOTTOMLEFT', castBarHeight + 1, -1)
     btn.ffCastbar:SetBackdrop(BACKDROP)
-    btn.ffCastbar:SetBackdropColor(0, 0, 0, 0.6)
+    btn.ffCastbar:SetBackdropColor(0, 0, 0, 0.7)
+    btn.ffCastbar:Hide()
 
     btn.ffCastbar.b = CreateBorder(nil, btn.ffCastbar, 9)
     btn.ffCastbar.b:SetPadding(0.4)

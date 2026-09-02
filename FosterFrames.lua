@@ -66,15 +66,15 @@ fosterFrame.Title:SetPoint('CENTER', fosterFrame, 'CENTER', 0, 1)
 
 -- Header Lock/Unlock Toggle Button
 fosterFrame.lockBtn = CreateFrame('Button', 'fosterFrameHeaderLockButton', fosterFrame)
-fosterFrame.lockBtn:SetWidth(24)
-fosterFrame.lockBtn:SetHeight(16)
-fosterFrame.lockBtn:SetPoint('LEFT', fosterFrame, 'LEFT', 4, 1)
+fosterFrame.lockBtn:SetWidth(18)
+fosterFrame.lockBtn:SetHeight(18)
+fosterFrame.lockBtn:SetPoint('LEFT', fosterFrame, 'LEFT', 6, 1)
 
 fosterFrame.lockBtn.text = fosterFrame.lockBtn:CreateFontString(nil, 'OVERLAY')
-fosterFrame.lockBtn.text:SetFont(STANDARD_TEXT_FONT, 11, 'OUTLINE')
+fosterFrame.lockBtn.text:SetFont(STANDARD_TEXT_FONT, 13, 'OUTLINE')
 fosterFrame.lockBtn.text:SetPoint('CENTER', fosterFrame.lockBtn, 'CENTER', 0, 0)
 fosterFrame.lockBtn.text:SetTextColor(0.85, 0.85, 0.85, 0.9)
-fosterFrame.lockBtn.text:SetText('[ - ]')
+fosterFrame.lockBtn.text:SetText('-')
 
 fosterFrame.lockBtn:SetScript('OnClick', function()
     if not FOSTERFRAMESPLAYERDATA then return end
@@ -83,6 +83,7 @@ fosterFrame.lockBtn:SetScript('OnClick', function()
     if fosterFramesSettings and fosterFramesSettings.unlock then
         fosterFramesSettings.unlock:SetText(FOSTERFRAMESPLAYERDATA['frameMovable'] and 'Lock' or 'Unlock')
     end
+    PlaySound("igMainMenuOptionCheckBoxOn")
 end)
 
 fosterFrame.lockBtn:SetScript('OnEnter', function()
@@ -420,15 +421,15 @@ local function showHideBars()
     if isUnlocked then
         fosterFrameDisplay.bg:Show()
         if fosterFrameDisplay.lockBtn and fosterFrameDisplay.lockBtn.text then
-            fosterFrameDisplay.lockBtn.text:SetText('[ - ]')
+            fosterFrameDisplay.lockBtn.text:SetText("-")
         end
     else
         fosterFrameDisplay.bg:Hide()
         if fosterFrameDisplay.lockBtn and fosterFrameDisplay.lockBtn.text then
-            fosterFrameDisplay.lockBtn.text:SetText('[ + ]')
+            fosterFrameDisplay.lockBtn.text:SetText("+")
         end
     end
-    fosterFrameDisplay:EnableMouse(isUnlocked)
+    fosterFrameDisplay:EnableMouse(true)
 end
 
 local function SetupFrames(maxU)

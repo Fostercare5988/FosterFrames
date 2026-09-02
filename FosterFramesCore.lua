@@ -56,13 +56,31 @@ local refreshUnits = true
 
 local f = CreateFrame('Frame', 'fosterFramesCore', UIParent)
 
--- Helper: Query exact distance via UnitXP SP3
+-- Helper: Query exact distance via SuperWoW UnitPosition 3D or UnitXP SP3
 local function getExactDistance(unit)
     if not unit or unit == "" then return nil end
+
+    -- 1. SuperWoW 3D World Space Euclidean Distance (UnitPosition)
+    if UnitPosition then
+        local px, py, pz = UnitPosition("player")
+        local ux, uy, uz = UnitPosition(unit)
+        if px and py and ux and uy then
+            local dx = px - ux
+            local dy = py - uy
+            local dz = (pz and uz) and (pz - uz) or 0
+            local dist = math.sqrt(dx * dx + dy * dy + dz * dz)
+            if dist >= 0 and dist < 9999 then
+                return math.floor(dist + 0.5)
+            end
+        end
+    end
+
+    -- 2. UnitXP SP3 Native Yard Engine
     local ok, d = pcall(UnitXP, "distance", unit)
     if ok and type(d) == "number" and d >= 0 and d < 9999 then
         return FosterFrames.Helpers.Round(d, 0)
     end
+
     return nil
 end
 

@@ -472,7 +472,6 @@ end
 local function updateUnits()
     if FOSTERFRAMES_TESTMODE then return end
     local now = GetTime()
-    if rtMenuEndtime < now then fosterFrame.raidTargetMenu:Hide() end
     if not fosterFrame.uiList then return end
 
     local currentTarget = UnitExists('target') and UnitName('target') or nil

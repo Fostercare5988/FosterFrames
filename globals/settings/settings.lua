@@ -30,6 +30,7 @@ if FOSTERFRAMESPLAYERDATA == nil then
         ['displayManaValues']            = false,
         -- Spy Mode
         ['openWorldScanning']            = true,
+        ['showDistance']                 = true,
         ['spySoundAlert']                = true,
         ['spyFlashTaskbar']              = false,
         ['spyStealthAlert']              = true,
@@ -117,6 +118,12 @@ local TABS_CONFIG = {
                 label = 'Scan Hostiles in Open World (Non-BG)',
                 tooltipTitle = 'Open World PvP Radar',
                 tooltipText = 'Enables nameplate and combat log scanning outside battlegrounds to detect, track, and display hostile players in world PvP.'
+            },
+            {
+                id = 'showDistance',
+                label = 'Show Live 3D Yard Distance on Enemy Frames',
+                tooltipTitle = 'Live 3D Distance Tracker',
+                tooltipText = 'Calculates real-time 3D Euclidean distance (in yards) to detected hostiles via SuperWoW UnitPosition, displaying color-coded yard tags directly on each enemy frame (Red <10yd, Yellow 10-30yd, Green >30yd).'
             },
             {
                 id = 'spySoundAlert',

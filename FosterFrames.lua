@@ -513,6 +513,17 @@ local function drawUnits(list)
         units[i].hpbar:SetMinMaxValues(0, maxHP)
         units[i].hpbar:SetValue(currHP)
 
+        -- Live 3D Distance display
+        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['showDistance'] ~= false and v.distance and v.distance > 0 and v.distance < 120 and v.nearby then
+            local d = math.floor(v.distance)
+            local dColor = (d <= 10 and "|cffff4444") or (d <= 30 and "|cffffff44") or "|cff44ff44"
+            units[i].distText:SetText(dColor .. d .. "y|r")
+            units[i].distText:Show()
+        else
+            units[i].distText:SetText("")
+            units[i].distText:Hide()
+        end
+
         local hpFormatted
         if maxHP > 100 and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayHealthValues'] then
             hpFormatted = (currHP >= 1000) and string.format("%.1fk", currHP / 1000) or tostring(currHP)
@@ -522,6 +533,7 @@ local function drawUnits(list)
         end
         units[i].hpText:SetText(hpFormatted)
         units[i].hpText:Show()
+
 
         local maxMana = v.maxmana or 100
         local currMana = v.mana or (not v.nearby and maxMana) or 100
@@ -624,9 +636,21 @@ local function updateUnits()
             units[i].targetCount.text:Hide()
         end
 
+        -- Live 3D Distance display update
+        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['showDistance'] ~= false and v.distance and v.distance > 0 and v.distance < 120 and v.nearby then
+            local d = math.floor(v.distance)
+            local dColor = (d <= 10 and "|cffff4444") or (d <= 30 and "|cffffff44") or "|cff44ff44"
+            units[i].distText:SetText(dColor .. d .. "y|r")
+            units[i].distText:Show()
+        else
+            units[i].distText:SetText("")
+            units[i].distText:Hide()
+        end
+
         local currentZoneName = GetZoneText()
         local isAV = (currentZoneName == 'Alterac Valley')
         local hideFarInAV = isAV and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avShowOnlyNearby']
+
 
         if ((FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayOnlyNearby']) or hideFarInAV) and not v.nearby then
             units[i]:Hide()

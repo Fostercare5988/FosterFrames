@@ -126,12 +126,21 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.name:SetPoint('LEFT', btn.hpbar, 'LEFT', 3, 0)
     btn.name:SetJustifyH('LEFT')
 
+    -- Live 3D Distance text (Right next to Name)
+    btn.distText = btn.hpbar:CreateFontString(nil, 'OVERLAY')
+    btn.distText:SetFont(STANDARD_TEXT_FONT, 8, 'OUTLINE')
+    btn.distText:SetTextColor(0.4, 1.0, 0.4, 0.95)
+    btn.distText:SetPoint('LEFT', btn.name, 'RIGHT', 3, 0)
+    btn.distText:SetJustifyH('LEFT')
+    btn.distText:Hide()
+
     -- Health value text (Right Aligned on HP Bar)
     btn.hpText = btn.hpbar:CreateFontString(nil, 'OVERLAY')
     btn.hpText:SetFont(STANDARD_TEXT_FONT, 8, 'OUTLINE')
     btn.hpText:SetTextColor(1, 1, 1, 0.95)
     btn.hpText:SetPoint('RIGHT', btn.hpbar, 'RIGHT', -2, 0)
     btn.hpText:SetJustifyH('RIGHT')
+
 
     -- Mana value text
     btn.manaText = btn.manabar:CreateFontString(nil, 'OVERLAY')

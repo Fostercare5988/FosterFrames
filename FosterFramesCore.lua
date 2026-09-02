@@ -51,7 +51,7 @@ local globalNearbyCheckNext = 0
 local nextPlayerCheck = 6
 local playerOutdoorLastseen = 60
 local raidMemberIndex = 1
-local maxUnitsDisplayed = 15
+local maxUnitsDisplayed = 40
 local refreshUnits = true
 
 local f = CreateFrame('Frame', 'fosterFramesCore', UIParent)
@@ -62,12 +62,12 @@ local function getExactDistance(unit)
 
     -- 1. SuperWoW 3D World Space Euclidean Distance (UnitPosition)
     if UnitPosition then
-        local px, py, pz = UnitPosition("player")
-        local ux, uy, uz = UnitPosition(unit)
-        if px and py and ux and uy then
+        local okP, px, py, pz = pcall(UnitPosition, "player")
+        local okU, ux, uy, uz = pcall(UnitPosition, unit)
+        if okP and okU and px and py and ux and uy and type(px) == "number" and type(ux) == "number" then
             local dx = px - ux
             local dy = py - uy
-            local dz = (pz and uz) and (pz - uz) or 0
+            local dz = (pz and uz and type(pz) == "number" and type(uz) == "number") and (pz - uz) or 0
             local dist = math.sqrt(dx * dx + dy * dy + dz * dz)
             if dist >= 0 and dist < 9999 then
                 return math.floor(dist + 0.5)
@@ -596,6 +596,7 @@ local function initializeValues()
     playerFaction = UnitFactionGroup('player')
     currentZone = GetZoneText()
     insideBG = (bgs[currentZone] ~= nil)
+    maxUnitsDisplayed = bgs[currentZone] or 40
 
     if insideBG then
         f:RegisterEvent('UPDATE_BATTLEFIELD_SCORE')

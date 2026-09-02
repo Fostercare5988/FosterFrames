@@ -16,8 +16,8 @@ local refreshInterval = 1 / 60
 local nextRefresh = 0
 
 -- Unit Limits & Collections
-local unitLimit = 15
-local maxUnits = 15
+local unitLimit = 40
+local maxUnits = 40
 local units = {}
 
 local enabled = false
@@ -111,6 +111,42 @@ local unitWidth, unitHeight, hpWidth, hpHeight, manaBarHeight, iconSize, castBar
 local xGap = 6
 local yGap = 4
 
+function FOSTERFRAMES_UpdateDimensions(newWidth, newHeight)
+    local width = newWidth or (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['unitWidth']) or unitWidth or 126
+    local height = newHeight or (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['unitHeight']) or unitHeight or 24
+
+    unitWidth = width
+    unitHeight = height
+
+    local iSize = math.max(16, height - 1)
+    local hpW = math.max(30, width - iSize - 3)
+    local manaH = math.max(3, math.floor(height * 0.22))
+    local hpH = math.max(8, height - manaH - 1)
+
+    for i = 1, unitLimit do
+        local btn = units[i]
+        if btn then
+            btn:SetWidth(width)
+            btn:SetHeight(height)
+
+            local showMana = (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManabar'])
+            btn.hpbar:SetWidth(hpW)
+            btn.hpbar:SetHeight(showMana and hpH or (height - 1))
+
+            btn.manabar:SetWidth(hpW)
+            btn.manabar:SetHeight(manaH)
+
+            btn.cc:SetWidth(iSize)
+            btn.cc:SetHeight(iSize)
+            btn.cc:SetPoint('TOPLEFT', btn, 'TOPLEFT', hpW + 3, 0)
+
+            btn.ffCastbar:SetWidth(width - 4)
+        end
+    end
+
+    if arrangeUnits then arrangeUnits() end
+end
+
 -- Create Unit Frames
 for i = 1, unitLimit do
     units[i] = CreateEnemyUnitFrame('fosterFrameUnit' .. i, fosterFrame)
@@ -146,24 +182,47 @@ for i = 1, unitLimit do
     end)
 end
 
--- Mock Test Data Definition (15 Units for WSG and AB testing)
+
+-- Mock Test Data Definition (40 Units for WSG, AB, and AV testing)
 local TEST_UNITS = {
-    { name = "Gladiator", class = "WARRIOR", powerType = "rage",   hp = 4850, maxHp = 5200, mana = 65,   maxMana = 100, spell = "Mortal Strike", icon = [[Interface\Icons\Ability_Warrior_SavageBlow]],   cast = 0,   castMax = 0,   tarCount = 3, iconCoord = {0.75, 1, 0.25, 0.5} },
-    { name = "HolyHeals", class = "PRIEST",  powerType = "mana",   hp = 3120, maxHp = 4100, mana = 2800, maxMana = 4900, spell = "Greater Heal",  icon = [[Interface\Icons\Spell_Holy_GreaterHeal]],       cast = 1.4, castMax = 2.5, tarCount = 2, iconCoord = nil },
-    { name = "FrostBite", class = "MAGE",    powerType = "mana",   hp = 2950, maxHp = 3800, mana = 3400, maxMana = 5400, spell = "Polymorph",     icon = [[Interface\Icons\Spell_Nature_Polymorph]],       cast = 0.8, castMax = 1.5, tarCount = 1, iconCoord = nil },
-    { name = "ShadowCut", class = "ROGUE",   powerType = "energy", hp = 3400, maxHp = 4400, mana = 100,  maxMana = 100,  spell = nil,             icon = nil,                                              cast = 0,   castMax = 0,   tarCount = 0, iconCoord = nil },
-    { name = "MoonFire",  class = "DRUID",   powerType = "mana",   hp = 3800, maxHp = 4600, mana = 2100, maxMana = 4200, spell = "Entangling Roots", icon = [[Interface\Icons\Spell_Nature_Stranglevines]], cast = 0.6, castMax = 1.5, tarCount = 1, iconCoord = nil },
-    { name = "DarkChaos", class = "WARLOCK", powerType = "mana",   hp = 4100, maxHp = 5000, mana = 3600, maxMana = 5100, spell = "Fear",             icon = [[Interface\Icons\Spell_Shadow_Possession]],       cast = 1.1, castMax = 1.5, tarCount = 0, iconCoord = nil },
-    { name = "EagleEye",  class = "HUNTER",  powerType = "mana",   hp = 3600, maxHp = 4500, mana = 1900, maxMana = 3800, spell = "Aimed Shot",      icon = [[Interface\Icons\Inv_spear_07]],                  cast = 1.8, castMax = 3.0, tarCount = 0, iconCoord = nil },
-    { name = "Thunder",   class = "SHAMAN",  powerType = "mana",   hp = 3900, maxHp = 4700, mana = 2200, maxMana = 4400, spell = "Chain Lightning", icon = [[Interface\Icons\Spell_Nature_ChainLightning]],  cast = 1.2, castMax = 2.0, tarCount = 1, iconCoord = nil },
-    { name = "Avenger",   class = "PALADIN", powerType = "mana",   hp = 4200, maxHp = 5100, mana = 2500, maxMana = 4600, spell = "Holy Light",      icon = [[Interface\Icons\Spell_Holy_HolyBolt]],          cast = 1.6, castMax = 2.5, tarCount = 0, iconCoord = nil },
-    { name = "Bladestorm",class = "WARRIOR", powerType = "rage",   hp = 2200, maxHp = 5400, mana = 25,   maxMana = 100,  spell = nil,             icon = nil,                                              cast = 0,   castMax = 0,   tarCount = 4, iconCoord = {0, 0.25, 0, 0.25} },
-    { name = "ShadowPri", class = "PRIEST",  powerType = "mana",   hp = 3300, maxHp = 4200, mana = 3100, maxMana = 4800, spell = "Mind Blast",    icon = [[Interface\Icons\Spell_Shadow_UnholyFrenzy]],    cast = 0.9, castMax = 1.5, tarCount = 1, iconCoord = nil },
-    { name = "FireMage",  class = "MAGE",    powerType = "mana",   hp = 2700, maxHp = 3600, mana = 2900, maxMana = 5200, spell = "Pyroblast",     icon = [[Interface\Icons\Spell_Fire_Fireball02]],        cast = 2.4, castMax = 3.5, tarCount = 0, iconCoord = nil },
-    { name = "SubRogue",  class = "ROGUE",   powerType = "energy", hp = 3600, maxHp = 4500, mana = 100,  maxMana = 100,  spell = nil,             icon = nil,                                              cast = 0,   castMax = 0,   tarCount = 0, iconCoord = nil },
-    { name = "BeastHunt", class = "HUNTER",  powerType = "mana",   hp = 3800, maxHp = 4600, mana = 1600, maxMana = 3600, spell = "Multi-Shot",     icon = [[Interface\Icons\Ability_UpgradeMoonGlaive]],    cast = 0,   castMax = 0,   tarCount = 0, iconCoord = nil },
-    { name = "AffLock",   class = "WARLOCK", powerType = "mana",   hp = 3950, maxHp = 4900, mana = 3200, maxMana = 5000, spell = "Shadow Bolt",    icon = [[Interface\Icons\Spell_Shadow_ShadowBolt]],      cast = 1.7, castMax = 2.5, tarCount = 2, iconCoord = nil },
+    { name = "Gladiator", class = "WARRIOR", powerType = "rage",   hp = 4850, maxHp = 5200, mana = 65,   maxMana = 100, spell = "Mortal Strike", icon = [[Interface\Icons\Ability_Warrior_SavageBlow]],   cast = 0,   castMax = 0,   tarCount = 3 },
+    { name = "HolyHeals", class = "PRIEST",  powerType = "mana",   hp = 3120, maxHp = 4100, mana = 2800, maxMana = 4900, spell = "Greater Heal",  icon = [[Interface\Icons\Spell_Holy_GreaterHeal]],       cast = 1.4, castMax = 2.5, tarCount = 2 },
+    { name = "FrostBite", class = "MAGE",    powerType = "mana",   hp = 2950, maxHp = 3800, mana = 3400, maxMana = 5400, spell = "Polymorph",     icon = [[Interface\Icons\Spell_Nature_Polymorph]],       cast = 0.8, castMax = 1.5, tarCount = 1 },
+    { name = "ShadowCut", class = "ROGUE",   powerType = "energy", hp = 3400, maxHp = 4400, mana = 100,  maxMana = 100,  spell = nil,             icon = nil,                                              cast = 0,   castMax = 0,   tarCount = 0 },
+    { name = "MoonFire",  class = "DRUID",   powerType = "mana",   hp = 3800, maxHp = 4600, mana = 2100, maxMana = 4200, spell = "Entangling Roots", icon = [[Interface\Icons\Spell_Nature_Stranglevines]], cast = 0.6, castMax = 1.5, tarCount = 1 },
+    { name = "DarkChaos", class = "WARLOCK", powerType = "mana",   hp = 4100, maxHp = 5000, mana = 3600, maxMana = 5100, spell = "Fear",             icon = [[Interface\Icons\Spell_Shadow_Possession]],       cast = 1.1, castMax = 1.5, tarCount = 0 },
+    { name = "EagleEye",  class = "HUNTER",  powerType = "mana",   hp = 3600, maxHp = 4500, mana = 1900, maxMana = 3800, spell = "Aimed Shot",      icon = [[Interface\Icons\Inv_spear_07]],                  cast = 1.8, castMax = 3.0, tarCount = 0 },
+    { name = "Thunder",   class = "SHAMAN",  powerType = "mana",   hp = 3900, maxHp = 4700, mana = 2200, maxMana = 4400, spell = "Chain Lightning", icon = [[Interface\Icons\Spell_Nature_ChainLightning]],  cast = 1.2, castMax = 2.0, tarCount = 1 },
+    { name = "Avenger",   class = "PALADIN", powerType = "mana",   hp = 4200, maxHp = 5100, mana = 2500, maxMana = 4600, spell = "Holy Light",      icon = [[Interface\Icons\Spell_Holy_HolyBolt]],          cast = 1.6, castMax = 2.5, tarCount = 0 },
+    { name = "Bladestorm",class = "WARRIOR", powerType = "rage",   hp = 2200, maxHp = 5400, mana = 25,   maxMana = 100,  spell = nil,             icon = nil,                                              cast = 0,   castMax = 0,   tarCount = 4 },
+    { name = "ShadowPri", class = "PRIEST",  powerType = "mana",   hp = 3300, maxHp = 4200, mana = 3100, maxMana = 4800, spell = "Mind Blast",    icon = [[Interface\Icons\Spell_Shadow_UnholyFrenzy]],    cast = 0.9, castMax = 1.5, tarCount = 1 },
+    { name = "FireMage",  class = "MAGE",    powerType = "mana",   hp = 2700, maxHp = 3600, mana = 2900, maxMana = 5200, spell = "Pyroblast",     icon = [[Interface\Icons\Spell_Fire_Fireball02]],        cast = 2.4, castMax = 3.5, tarCount = 0 },
+    { name = "SubRogue",  class = "ROGUE",   powerType = "energy", hp = 3600, maxHp = 4500, mana = 100,  maxMana = 100,  spell = nil,             icon = nil,                                              cast = 0,   castMax = 0,   tarCount = 0 },
+    { name = "BeastHunt", class = "HUNTER",  powerType = "mana",   hp = 3800, maxHp = 4600, mana = 1600, maxMana = 3600, spell = "Multi-Shot",     icon = [[Interface\Icons\Ability_UpgradeMoonGlaive]],    cast = 0,   castMax = 0,   tarCount = 0 },
+    { name = "AffLock",   class = "WARLOCK", powerType = "mana",   hp = 3950, maxHp = 4900, mana = 3200, maxMana = 5000, spell = "Shadow Bolt",    icon = [[Interface\Icons\Spell_Shadow_ShadowBolt]],      cast = 1.7, castMax = 2.5, tarCount = 2 },
 }
+
+-- Auto-fill up to 40 mock test units
+local extraClasses = {"WARRIOR", "PRIEST", "MAGE", "ROGUE", "DRUID", "WARLOCK", "HUNTER", "SHAMAN", "PALADIN"}
+for idx = #TEST_UNITS + 1, 40 do
+    local cls = extraClasses[(idx % #extraClasses) + 1]
+    local pType = (cls == 'WARRIOR' and 'rage') or (cls == 'ROGUE' and 'energy') or 'mana'
+    TEST_UNITS[idx] = {
+        name = "Enemy" .. idx,
+        class = cls,
+        powerType = pType,
+        hp = 3000 + (idx * 40) % 2200,
+        maxHp = 4000 + (idx * 50) % 1500,
+        mana = 2000 + (idx * 30) % 2500,
+        maxMana = 4500,
+        spell = nil,
+        icon = nil,
+        cast = 0,
+        castMax = 0,
+        tarCount = 0,
+    }
+end
+
 
 local testUnitCount = 10
 
@@ -344,7 +403,7 @@ local function showHideBars()
 end
 
 local function SetupFrames(maxU)
-    maxUnits = maxU or 15
+    maxUnits = maxU or 40
     if maxUnits < 1 then maxUnits = 1 end
     playerFaction = UnitFactionGroup('player')
 
@@ -359,12 +418,14 @@ local function SetupFrames(maxU)
     fosterFrameDisplay.Title:SetTextColor(enemyFactionColor.r, enemyFactionColor.g, enemyFactionColor.b, 0.9)
     fosterFrameDisplay.totalPlayers:SetTextColor(enemyFactionColor.r, enemyFactionColor.g, enemyFactionColor.b, 0.9)
 
+    FOSTERFRAMES_UpdateDimensions()
     showHideBars()
 
     if FOSTERFRAMES_DEBUG or FOSTERFRAMES_TESTMODE then
         renderTestVisuals()
     end
 end
+
 
 local function drawUnits(list)
     if FOSTERFRAMES_TESTMODE then return end

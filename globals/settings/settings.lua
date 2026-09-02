@@ -13,6 +13,8 @@ if FOSTERFRAMESPLAYERDATA == nil then
     FOSTERFRAMESPLAYERDATA = {
         -- Options
         ['scale']                        = 1,
+        ['unitWidth']                    = 126,
+        ['unitHeight']                   = 24,
         ['groupsize']                    = 5,
         ['layout']                       = 'block',
         ['frameMovable']                 = true,
@@ -369,10 +371,73 @@ local function CreateTabContainers()
             container.scaleSlider = scaleSlider
         end
 
-        -- Layout Slider for Appearance
+        -- Dimensions & Layout Sliders for Appearance
         if tabData.hasLayout then
+            -- Width Slider
+            local widthLabel = container:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
+            widthLabel:SetPoint('TOPLEFT', prev, 'BOTTOMLEFT', 0, -10)
+            widthLabel:SetText('Frame Width')
+            widthLabel:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.9)
+
+            local widthSlider = CreateFrame('Slider', 'fosterFramesWidthSlider', container, 'OptionsSliderTemplate')
+            widthSlider:SetWidth(150)
+            widthSlider:SetHeight(16)
+            widthSlider:SetPoint('TOPLEFT', widthLabel, 'BOTTOMLEFT', 5, -8)
+            widthSlider:SetMinMaxValues(80, 200)
+            widthSlider:SetValueStep(2)
+            _G[widthSlider:GetName() .. 'Low']:SetText('80px')
+            _G[widthSlider:GetName() .. 'High']:SetText('200px')
+            _G[widthSlider:GetName() .. 'Text']:SetText((FOSTERFRAMESPLAYERDATA['unitWidth'] or 126) .. 'px')
+
+            widthSlider.ttTitle = 'Frame Width'
+            widthSlider.ttText = 'Adjusts the horizontal width in pixels of each enemy unit card (default: 126px).'
+
+            widthSlider:SetScript('OnValueChanged', function()
+                local v = math.floor(this:GetValue() + 0.5)
+                FOSTERFRAMESPLAYERDATA['unitWidth'] = v
+                _G[this:GetName() .. 'Text']:SetText(v .. 'px')
+                if FOSTERFRAMES_UpdateDimensions then
+                    FOSTERFRAMES_UpdateDimensions(v, FOSTERFRAMESPLAYERDATA['unitHeight'])
+                end
+            end)
+            widthSlider:SetScript('OnEnter', function() ShowTooltip(this, this.ttTitle, this.ttText) end)
+            widthSlider:SetScript('OnLeave', function() GameTooltip:Hide() end)
+            container.widthSlider = widthSlider
+
+            -- Height Slider
+            local heightLabel = container:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
+            heightLabel:SetPoint('LEFT', widthLabel, 'LEFT', 170, 0)
+            heightLabel:SetText('Frame Height')
+            heightLabel:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.9)
+
+            local heightSlider = CreateFrame('Slider', 'fosterFramesHeightSlider', container, 'OptionsSliderTemplate')
+            heightSlider:SetWidth(150)
+            heightSlider:SetHeight(16)
+            heightSlider:SetPoint('TOPLEFT', heightLabel, 'BOTTOMLEFT', 5, -8)
+            heightSlider:SetMinMaxValues(16, 45)
+            heightSlider:SetValueStep(1)
+            _G[heightSlider:GetName() .. 'Low']:SetText('16px')
+            _G[heightSlider:GetName() .. 'High']:SetText('45px')
+            _G[heightSlider:GetName() .. 'Text']:SetText((FOSTERFRAMESPLAYERDATA['unitHeight'] or 24) .. 'px')
+
+            heightSlider.ttTitle = 'Frame Height'
+            heightSlider.ttText = 'Adjusts the vertical height in pixels of each enemy unit card (default: 24px).'
+
+            heightSlider:SetScript('OnValueChanged', function()
+                local v = math.floor(this:GetValue() + 0.5)
+                FOSTERFRAMESPLAYERDATA['unitHeight'] = v
+                _G[this:GetName() .. 'Text']:SetText(v .. 'px')
+                if FOSTERFRAMES_UpdateDimensions then
+                    FOSTERFRAMES_UpdateDimensions(FOSTERFRAMESPLAYERDATA['unitWidth'], v)
+                end
+            end)
+            heightSlider:SetScript('OnEnter', function() ShowTooltip(this, this.ttTitle, this.ttText) end)
+            heightSlider:SetScript('OnLeave', function() GameTooltip:Hide() end)
+            container.heightSlider = heightSlider
+
+            -- Layout Slider
             local layoutLabel = container:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
-            layoutLabel:SetPoint('TOPLEFT', prev, 'BOTTOMLEFT', 0, -15)
+            layoutLabel:SetPoint('TOPLEFT', widthSlider, 'BOTTOMLEFT', -5, -16)
             layoutLabel:SetText('Frame Layout Mode')
             layoutLabel:SetTextColor(factionColor.r, factionColor.g, factionColor.b, 0.9)
 
@@ -418,10 +483,22 @@ local function RefreshSettingsUI()
         containers[1].scaleSlider:SetValue(FOSTERFRAMESPLAYERDATA['scale'] or 1.0)
     end
 
-    if containers[5] and containers[5].layoutSlider then
-        local layout = FOSTERFRAMESPLAYERDATA['layout'] or 'block'
-        local val = (layout == 'horizontal' and 0) or (layout == 'hblock' and 1) or (layout == 'block' and 2) or (layout == 'vblock' and 3) or 4
-        containers[5].layoutSlider:SetValue(val)
+    if containers[5] then
+        if containers[5].widthSlider then
+            local w = FOSTERFRAMESPLAYERDATA['unitWidth'] or 126
+            containers[5].widthSlider:SetValue(w)
+            _G[containers[5].widthSlider:GetName() .. 'Text']:SetText(w .. 'px')
+        end
+        if containers[5].heightSlider then
+            local h = FOSTERFRAMESPLAYERDATA['unitHeight'] or 24
+            containers[5].heightSlider:SetValue(h)
+            _G[containers[5].heightSlider:GetName() .. 'Text']:SetText(h .. 'px')
+        end
+        if containers[5].layoutSlider then
+            local layout = FOSTERFRAMESPLAYERDATA['layout'] or 'block'
+            local val = (layout == 'horizontal' and 0) or (layout == 'hblock' and 1) or (layout == 'block' and 2) or (layout == 'vblock' and 3) or 4
+            containers[5].layoutSlider:SetValue(val)
+        end
     end
 end
 
@@ -443,14 +520,14 @@ for i, tabData in ipairs(TABS_CONFIG) do
     settings.tabs[i] = btn
 end
 
--- Test Mode Button (Live Preview Cycler: 10 -> 15 -> OFF)
+-- Test Mode Button (Live Preview Cycler: 10 -> 15 -> 40 -> OFF)
 settings.testBtn = CreateFrame('Button', 'fosterFramesSettingsTestButton', settings.sidebar, 'UIPanelButtonTemplate')
 settings.testBtn:SetWidth(98)
 settings.testBtn:SetHeight(23)
 settings.testBtn:SetPoint('BOTTOM', settings.sidebar, 'BOTTOM', 0, 68)
 settings.testBtn:SetText('Test: 10')
 settings.testBtn.ttTitle = 'Live Preview Scenarios'
-settings.testBtn.ttText = 'Cycles live preview test scenarios:\n• Test: 10 (Warsong Gulch & Arena 10v10)\n• Test: 15 (Arathi Basin 15v15)\n• Test: OFF (Disable preview)'
+settings.testBtn.ttText = 'Cycles live preview test scenarios:\n• Test: 10 (Warsong Gulch & Arena 10v10)\n• Test: 15 (Arathi Basin 15v15)\n• Test: 40 (Alterac Valley 40v40)\n• Test: OFF (Disable preview)'
 settings.testBtn:SetScript('OnClick', function()
     if not FOSTERFRAMES_TESTMODE then
         FOSTERFRAMES_SetTestMode(true, 10)
@@ -458,6 +535,9 @@ settings.testBtn:SetScript('OnClick', function()
     elseif FOSTERFRAMES_GetTestCount and FOSTERFRAMES_GetTestCount() == 10 then
         FOSTERFRAMES_SetTestMode(true, 15)
         this:SetText('Test: 15 (AB)')
+    elseif FOSTERFRAMES_GetTestCount and FOSTERFRAMES_GetTestCount() == 15 then
+        FOSTERFRAMES_SetTestMode(true, 40)
+        this:SetText('Test: 40 (AV)')
     else
         FOSTERFRAMES_SetTestMode(false)
         this:SetText('Test: OFF')
@@ -467,6 +547,7 @@ settings.testBtn:SetScript('OnEnter', function()
     ShowTooltip(this, this.ttTitle, this.ttText)
 end)
 settings.testBtn:SetScript('OnLeave', function() GameTooltip:Hide() end)
+
 
 -- Unlock/Lock Position Button
 settings.unlock = CreateFrame('Button', 'fosterFramesSettingsUnlockButton', settings.sidebar, 'UIPanelButtonTemplate')

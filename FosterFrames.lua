@@ -66,15 +66,18 @@ fosterFrame.Title:SetPoint('CENTER', fosterFrame, 'CENTER', 0, 1)
 
 -- Header Lock/Unlock Toggle Button
 fosterFrame.lockBtn = CreateFrame('Button', 'fosterFrameHeaderLockButton', fosterFrame)
-fosterFrame.lockBtn:SetWidth(18)
-fosterFrame.lockBtn:SetHeight(18)
+fosterFrame.lockBtn:SetWidth(20)
+fosterFrame.lockBtn:SetHeight(20)
+fosterFrame.lockBtn:SetFrameLevel(10)
 fosterFrame.lockBtn:SetPoint('LEFT', fosterFrame, 'LEFT', 6, 1)
+fosterFrame.lockBtn:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
+fosterFrame.lockBtn:EnableMouse(true)
 
 fosterFrame.lockBtn.text = fosterFrame.lockBtn:CreateFontString(nil, 'OVERLAY')
-fosterFrame.lockBtn.text:SetFont(STANDARD_TEXT_FONT, 13, 'OUTLINE')
+fosterFrame.lockBtn.text:SetFont(STANDARD_TEXT_FONT, 14, 'OUTLINE')
 fosterFrame.lockBtn.text:SetPoint('CENTER', fosterFrame.lockBtn, 'CENTER', 0, 0)
 fosterFrame.lockBtn.text:SetTextColor(0.85, 0.85, 0.85, 0.9)
-fosterFrame.lockBtn.text:SetText('-')
+fosterFrame.lockBtn.text:SetText(FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['frameMovable'] and '-' or '+')
 
 fosterFrame.lockBtn:SetScript('OnClick', function()
     if not FOSTERFRAMESPLAYERDATA then return end
@@ -607,15 +610,12 @@ local function updateUnits()
             units[i].ffCastbar:Show()
         end
 
-        -- Trinket CD
+        -- Trinket CD (overlays or overrides CC icon if on cooldown)
         local trinket = FOSTERFRAMECOREGetTrinketCooldown(v.guid)
         if trinket then
-            units[i].trinket.icon:SetTexture(trinket.icon or [[Interface\Icons\inv_jewelry_trinketpvp_01]])
-            units[i].trinket.cd:SetTimers(trinket.start, trinket['end'])
-            units[i].trinket.cd:Show()
-            units[i].trinket:Show()
-        else
-            units[i].trinket:Hide()
+            units[i].cc.icon:SetTexture(trinket.icon or [[Interface\Icons\inv_jewelry_trinketpvp_01]])
+            units[i].cc.cd:SetTimers(trinket.start, trinket['end'])
+            units[i].cc.cd:Show()
         end
 
         -- Raid Target

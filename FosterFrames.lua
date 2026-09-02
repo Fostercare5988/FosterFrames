@@ -166,10 +166,17 @@ for i = 1, unitLimit do
 
     units[i]:SetScript('OnClick', function(self, button)
         local frame = self or this
+        if frame.guid and TargetUnit and type(frame.guid) == "string" and frame.guid:sub(1, 2) == "0x" and not frame.guid:find("TEST") then
+            local ok = pcall(TargetUnit, frame.guid)
+            if ok and UnitExists("target") and (not frame.tar or UnitName("target") == frame.tar) then
+                return
+            end
+        end
         if frame.tar then
             TargetByName(frame.tar, true)
         end
     end)
+
 
     units[i]:SetScript('OnEnter', function(self)
         local frame = self or this

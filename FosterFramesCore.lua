@@ -177,13 +177,14 @@ local function updateUnitDistance(p, unit)
 end
 
 function FOSTERFRAMESGetUnitSpec(unit)
-    if not unit or not UnitExists(unit) then return nil end
+    if not unit or unit == "" then return nil end
     if UnitSpec then
         local ok, spec = pcall(UnitSpec, unit)
         if ok and spec then return spec end
     end
     return nil
 end
+
 
 local function verifyUnitInfo(unit, now)
     now = now or GetTime()

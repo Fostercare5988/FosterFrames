@@ -103,7 +103,7 @@ local function efcLowHealth()
     local now = GetTime()
 
     if flagCarriers[enemyFaction] and fcHealth[enemyFaction] then
-        for i = 1, #healthWarnings do
+        for i = 1, table.getn(healthWarnings) do
             local threshold = healthWarnings[i]
             if fcHealth[enemyFaction] < threshold then
                 if (not sentAnnouncement or threshold < lowestWarning) and now > nextAnnouncement then

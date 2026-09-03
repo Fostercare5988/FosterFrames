@@ -56,11 +56,19 @@ local refreshUnits = true
 
 local f = CreateFrame('Frame', 'fosterFramesCore', UIParent)
 
--- Helper: Query exact distance via SuperWoW UnitPosition 3D or UnitXP SP3
+-- Helper: Query exact distance via UnitXP SP3 or SuperWoW UnitPosition 3D
 local function getExactDistance(unit)
     if not unit or unit == "" then return nil end
 
-    -- 1. SuperWoW 3D World Space Euclidean Distance (UnitPosition)
+    -- 1. UnitXP SP3 Native C++ Euclidean Distance
+    if UnitXP then
+        local ok, dist = pcall(UnitXP, "distance", unit)
+        if ok and type(dist) == "number" and dist >= 0 and dist < 9999 then
+            return math.floor(dist + 0.5)
+        end
+    end
+
+    -- 2. SuperWoW 3D World Space Euclidean Distance (UnitPosition)
     if UnitPosition then
         local okP, px, py, pz = pcall(UnitPosition, "player")
         local okU, ux, uy, uz = pcall(UnitPosition, unit)
@@ -75,29 +83,21 @@ local function getExactDistance(unit)
         end
     end
 
-    if not unit then return nil end
-    if not (UnitPosition) then return nil end
-
-    local ok1, px, py, pz = pcall(UnitPosition, "player")
-    if not ok1 or not px then return nil end
-
-    local ok2, ux, uy, uz = pcall(UnitPosition, unit)
-    if not ok2 or not ux then return nil end
-
-    local dx = px - ux
-    local dy = py - uy
-    local dz = pz - uz
-    local dist = math.sqrt(dx * dx + dy * dy + dz * dz)
-    return math.floor(dist + 0.5)
+    return nil
 end
 
 -- Helper: Query exact health via UnitXP SP3 or UnitHealth
 local function getExactHealth(unit)
     local ok, h, mh
-    ok, h = pcall(UnitXP, "health", unit)
-    if not (ok and type(h) == "number") then h = UnitHealth(unit) or 100 end
-    ok, mh = pcall(UnitXP, "maxhealth", unit)
-    if not (ok and type(mh) == "number") then mh = UnitHealthMax(unit) or 100 end
+    if UnitXP then
+        ok, h = pcall(UnitXP, "health", unit)
+        if not (ok and type(h) == "number") then h = UnitHealth(unit) or 100 end
+        ok, mh = pcall(UnitXP, "maxhealth", unit)
+        if not (ok and type(mh) == "number") then mh = UnitHealthMax(unit) or 100 end
+    else
+        h = UnitHealth(unit) or 100
+        mh = UnitHealthMax(unit) or 100
+    end
     return h, mh
 end
 
@@ -132,14 +132,36 @@ local function triggerSpyAlerts(name, class)
     end
 end
 
--- Apply / update hostile nearby player
+-- Apply / update hostile nearby player without table churn
+local function updatePlayerData(p, class, h, mh, mana, maxmana, powerType, guid, now, nextCheck)
+    if h then p.health = h end
+    if mh then p.maxhealth = mh end
+    if mana then p.mana = mana end
+    if maxmana then p.maxmana = maxmana end
+    if guid then p.guid = guid end
+    if class then p.class = class end
+
+    if powerType then
+        p.powerType = powerType
+    elseif not p.powerType then
+        p.powerType = (p.class == 'WARRIOR' and 'rage') or (p.class == 'ROGUE' and 'energy') or 'mana'
+    end
+
+    if now > enemyNearbyRefresh then
+        p.targetcount = (p.targetcount or 0) + 1
+    end
+
+    p.nextCheck = nextCheck
+    p.nearby = true
+end
+
 local function applyNearbyPlayer(v, now, nextCheck)
     local id = v.name
     if not id or id == "" or id == "Unknown" or id == "Unbekannt" or id == "Inconnu" then
         return
     end
 
-    -- If another entry exists with the exact same GUID (e.g. temporary placeholder), remove it
+    -- If another entry exists with the exact same GUID, remove it
     if v.guid and v.guid ~= "" then
         for oldId, oldPlayer in pairs(playerList) do
             if oldId ~= id and oldPlayer.guid == v.guid then
@@ -148,49 +170,30 @@ local function applyNearbyPlayer(v, now, nextCheck)
         end
     end
 
-    local isNew = (playerList[id] == nil)
-    if isNew then
-        playerList[id] = v
+    local p = playerList[id]
+    if not p then
+        p = {
+            name      = id,
+            class     = v.class or 'WARRIOR',
+            guid      = v.guid or id,
+            nearby    = true,
+            maxhealth = v.maxhealth or 100,
+        }
+        playerList[id] = p
         refreshUnits = true
         if not insideBG then
-            triggerSpyAlerts(v.name, v.class)
+            triggerSpyAlerts(id, v.class)
         end
     end
 
-
-    local p = playerList[id]
-    if p then
-        p.health = v.health or p.health
-        if v.maxhealth then p.maxhealth = v.maxhealth end
-        if v.mana then p.mana = v.mana end
-        if v.maxmana then p.maxmana = v.maxmana end
-        if v.sex then p.sex = v.sex end
-        if v.guid then p.guid = v.guid end
-        if v.class then p.class = v.class end
-
-        if v.powerType then
-            p.powerType = v.powerType
-        else
-            p.powerType = (p.class == 'WARRIOR' and 'rage') or (p.class == 'ROGUE' and 'energy') or 'mana'
-        end
-
-        if now > enemyNearbyRefresh then
-            p.targetcount = (p.targetcount or 0) + 1
-        end
-
-        p.nextCheck = nextCheck
-        p.nearby = true
-    end
+    updatePlayerData(p, v.class, v.health, v.maxhealth, v.mana, v.maxmana, v.powerType, v.guid, now, nextCheck)
 end
 
 local function updateUnitDistance(p, unit)
     if not p or not unit then return end
     local dist = getExactDistance(unit)
     if dist then
-        if p.distance ~= dist then
-            p.distance = dist
-            refreshUnits = true
-        end
+        p.distance = dist
     end
 end
 
@@ -198,35 +201,38 @@ local function verifyUnitInfo(unit, now)
     now = now or GetTime()
     if UnitExists(unit) and UnitIsPlayer(unit) and UnitFactionGroup(unit) ~= playerFaction then
         local name = UnitName(unit)
+        if not name or name == "" then return false end
+
         local _, class = UnitClass(unit)
         local h, mh = getExactHealth(unit)
         local power = UnitPowerType(unit)
         local powerType = (power == 3 and 'energy') or (power == 1 and 'rage') or 'mana'
         local guid = UnitGUID(unit) or name
-
-        local u = {
-            name      = name,
-            class     = class or 'WARRIOR',
-            health    = h,
-            maxhealth = mh,
-            mana      = UnitMana(unit),
-            maxmana   = UnitManaMax(unit),
-            powerType = powerType,
-            guid      = guid,
-            nearby    = true,
-        }
-
-        applyNearbyPlayer(u, now, now + nextPlayerCheck)
+        local nextCheck = now + nextPlayerCheck
 
         local p = playerList[name]
-        if p then
-            updateUnitDistance(p, unit)
-            if p.fc and WSGUIupdateFChealth then
-                WSGUIupdateFChealth(unit)
+        if not p then
+            p = {
+                name      = name,
+                class     = class or 'WARRIOR',
+                guid      = guid,
+                nearby    = true,
+                maxhealth = mh or 100,
+            }
+            playerList[name] = p
+            refreshUnits = true
+            if not insideBG then
+                triggerSpyAlerts(name, class)
             end
         end
-        return true
 
+        updatePlayerData(p, class, h, mh, UnitMana(unit), UnitManaMax(unit), powerType, guid, now, nextCheck)
+        updateUnitDistance(p, unit)
+
+        if p.fc and WSGUIupdateFChealth then
+            WSGUIupdateFChealth(unit)
+        end
+        return true
     end
     return false
 end
@@ -239,33 +245,62 @@ local function broadcastSpottedEnemy(name, class, guid)
     sendMSG('SCAN', d, nil, insideBG)
 end
 
+local function processCombatUnit(guid, name, flags, now, nextCheck)
+    if not guid or guid == "" or not name or name == "" then return end
+    local isEnemy = bit.band(flags or 0, 64) ~= 0
+    local isPlayer = bit.band(flags or 0, 1024) ~= 0
+
+    if isPlayer and isEnemy then
+        local p = playerList[name]
+        local isNew = (p == nil)
+        if isNew then
+            p = {
+                name      = name,
+                guid      = guid,
+                class     = 'WARRIOR',
+                nearby    = true,
+                maxhealth = 100,
+                nextCheck = nextCheck,
+            }
+            playerList[name] = p
+            refreshUnits = true
+            if not insideBG then
+                triggerSpyAlerts(name, nil)
+            end
+            broadcastSpottedEnemy(name, nil, guid)
+        else
+            p.guid = guid
+            p.nearby = true
+            p.nextCheck = nextCheck
+        end
+    end
+end
+
 local function scanCombatLog(now)
     if not (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['openWorldScanning']) then return end
     if not arg1 then return end
 
     local _, event, _, sourceGUID, sourceName, sourceFlags, _, destGUID, destName, destFlags = arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10
 
-    local function processUnit(guid, name, flags)
-        if not guid or guid == "" or not name or name == "" then return end
-        local isEnemy = bit.band(flags or 0, 64) ~= 0
-        local isPlayer = bit.band(flags or 0, 1024) ~= 0
+    local nextCheck = now + nextPlayerCheck
+    processCombatUnit(sourceGUID, sourceName, sourceFlags, now, nextCheck)
+    processCombatUnit(destGUID, destName, destFlags, now, nextCheck)
 
-        if isPlayer and isEnemy then
-            local isNew = (playerList[name] == nil)
-            local u = {
-                name   = name,
-                guid   = guid,
-                nearby = true,
-            }
-            applyNearbyPlayer(u, now, now + nextPlayerCheck)
-            if isNew then
-                broadcastSpottedEnemy(name, nil, guid)
+    -- Stealth Action Watcher
+    if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['spyStealthAlert'] and not insideBG then
+        if event == "SPELL_AURA_APPLIED" or event == "SPELL_CAST_SUCCESS" then
+            local spellName = arg13
+            if spellName == "Stealth" or spellName == "Prowl" or spellName == "Vanish" or spellName == "Shadowmeld" then
+                local isEnemy = bit.band(sourceFlags or 0, 64) ~= 0
+                if isEnemy then
+                    DEFAULT_CHAT_FRAME:AddMessage("|cffff2020[Spy Stealth Alert]|r Hostile " .. (sourceName or "Enemy") .. " used " .. spellName .. "!")
+                    if FOSTERFRAMESPLAYERDATA['spySoundAlert'] then
+                        PlaySound("RaidWarning")
+                    end
+                end
             end
         end
     end
-
-    processUnit(sourceGUID, sourceName, sourceFlags)
-    processUnit(destGUID, destName, destFlags)
 
     -- Trinket cooldown detection
     if event == "SPELL_CAST_SUCCESS" then
@@ -275,7 +310,7 @@ local function scanCombatLog(now)
                 trinketTimers[sourceGUID] = {
                     start = now,
                     ['end'] = now + 180,
-                    icon = arg15 or [[Interface\Icons\inv_jewelry_trinketpvp_01]],
+                    icon = [[Interface\Icons\inv_jewelry_trinketpvp_01]],
                 }
             end
         end
@@ -355,15 +390,13 @@ local function updatePlayerListInfo(now)
             end
             v.nextCheck = nextCheck
         else
-            if v.distance ~= 999 then
-                v.distance = 999
-            end
+            v.distance = 999
         end
 
         v.castinfo = SPELLCASTINGCOREgetCast(v.name, unitID)
         local buffList = SPELLCASTINGCOREgetBuffs(v.name, unitID)
 
-        if v.castinfo or (buffList and #buffList > 0) then
+        if v.castinfo or (buffList and table.getn(buffList) > 0) then
             v.nextCheck = nextCheck
             if v.nearby == false then
                 v.health = v.maxhealth or 100
@@ -438,55 +471,36 @@ local CLASS_STABLE_SORT_ORDER = {
     ['WARRIOR'] = 9,
 }
 
+local sortBuffer = {}
+local outputBuffer = {}
+
+local function stableSortComparator(a, b)
+    local aOrder = CLASS_STABLE_SORT_ORDER[a.class] or 10
+    local bOrder = CLASS_STABLE_SORT_ORDER[b.class] or 10
+    if aOrder ~= bOrder then
+        return aOrder < bOrder
+    end
+    return (a.name or '') < (b.name or '')
+end
+
 local function orderUnitsforOutput()
-    local list = {}
+    table.wipe(sortBuffer)
+    local count = 0
     for _, v in pairs(playerList) do
-        table.insert(list, v)
+        count = count + 1
+        sortBuffer[count] = v
     end
+    table.setn(sortBuffer, count)
 
-    local currentZoneName = GetZoneText()
-    local isAV = (currentZoneName == 'Alterac Valley')
+    table.sort(sortBuffer, stableSortComparator)
 
-    table.sort(list, function(a, b)
-        -- In Alterac Valley (or AV / BattlegroundTargets mode):
-        -- Always sort strictly by Class Group then Alphabetical by Name.
-        -- This guarantees 100% rock-solid, static slots: ZERO jumping, zero shuffling!
-        if isAV or (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avMode'] and insideBG) then
-            local aOrder = CLASS_STABLE_SORT_ORDER[a.class] or 10
-            local bOrder = CLASS_STABLE_SORT_ORDER[b.class] or 10
-            if aOrder ~= bOrder then
-                return aOrder < bOrder
-            end
-            return (a.name or '') < (b.name or '')
-        end
-
-        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['smartDistanceSorting'] then
-            local distA = a.distance or 999
-            local distB = b.distance or 999
-            if distA ~= distB then
-                return distA < distB
-            end
-        end
-
-        if a.nearby ~= b.nearby then
-            return a.nearby
-        end
-
-        local aOrder = CLASS_STABLE_SORT_ORDER[a.class] or 10
-        local bOrder = CLASS_STABLE_SORT_ORDER[b.class] or 10
-        if aOrder ~= bOrder then
-            return aOrder < bOrder
-        end
-
-        return (a.name or '') < (b.name or '')
-    end)
-
-    local result = {}
-    local count = math.min(#list, maxUnitsDisplayed)
-    for i = 1, count do
-        result[i] = list[i]
+    table.wipe(outputBuffer)
+    local displayCount = math.min(count, maxUnitsDisplayed)
+    for i = 1, displayCount do
+        outputBuffer[i] = sortBuffer[i]
     end
-    return result
+    table.setn(outputBuffer, displayCount)
+    return outputBuffer
 end
 
 
@@ -688,7 +702,7 @@ local function eventHandler()
     local evt = event
     local now = GetTime()
 
-    if evt == 'PLAYER_ENTERING_WORLD' or evt == 'ZONE_CHANGED_NEW_AREA' then
+    if evt == 'PLAYER_ENTERING_WORLD' or evt == 'ZONE_CHANGED_NEW_AREA' or evt == 'ZONE_CHANGED' then
         initializeValues()
     elseif evt == 'COMBAT_LOG_EVENT_UNFILTERED' then
         scanCombatLog(now)
@@ -731,6 +745,7 @@ end
 
 f:RegisterEvent('PLAYER_ENTERING_WORLD')
 f:RegisterEvent('ZONE_CHANGED_NEW_AREA')
+f:RegisterEvent('ZONE_CHANGED')
 f:RegisterEvent('UPDATE_BATTLEFIELD_SCORE')
 f:RegisterEvent('UNIT_HEALTH')
 f:RegisterEvent('UNIT_PVP_UPDATE')

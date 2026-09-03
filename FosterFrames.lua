@@ -112,7 +112,7 @@ local xGap = 6
 local yGap = 4
 
 function FOSTERFRAMES_UpdateDimensions(newWidth, newHeight)
-    local currentZoneName = GetZoneText()
+    local currentZoneName = (cachedZone ~= "") and cachedZone or GetZoneText()
     local isAV = (currentZoneName == 'Alterac Valley') or (FOSTERFRAMES_TESTMODE and testUnitCount == 40)
     local isAVMode = isAV and (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avMode'] ~= false)
 
@@ -163,6 +163,21 @@ for i = 1, unitLimit do
 
     units[i]:SetScript('OnClick', function(self, button)
         local frame = self or this
+        button = button or arg1
+        if button == "RightButton" then
+            if UnitExists("target") and UnitName("target") == frame.tar then
+                local currentIcon = GetRaidTargetIndex("target")
+                SetRaidTargetIcon("target", (currentIcon == 8) and 0 or 8)
+            else
+                if frame.guid and TargetUnit and type(frame.guid) == "string" and frame.guid:sub(1, 2) == "0x" and not frame.guid:find("TEST") then
+                    pcall(TargetUnit, frame.guid)
+                elseif frame.tar then
+                    TargetByName(frame.tar, true)
+                end
+            end
+            return
+        end
+
         if frame.guid and TargetUnit and type(frame.guid) == "string" and frame.guid:sub(1, 2) == "0x" and not frame.guid:find("TEST") then
             local ok = pcall(TargetUnit, frame.guid)
             if ok and UnitExists("target") and (not frame.tar or UnitName("target") == frame.tar) then
@@ -174,13 +189,15 @@ for i = 1, unitLimit do
         end
     end)
 
-
     units[i]:SetScript('OnEnter', function(self)
         local frame = self or this
         if frame.hoverEnabled then
             frame.name:SetTextColor(enemyFactionColor.r, enemyFactionColor.g, enemyFactionColor.b)
             frame.mo = true
             MOUSEOVERUNINAME = frame.tar
+        end
+        if SetMouseoverUnit and frame.guid then
+            SetMouseoverUnit(frame.guid)
         end
     end)
 
@@ -194,6 +211,9 @@ for i = 1, unitLimit do
         end
         frame.mo = false
         MOUSEOVERUNINAME = nil
+        if SetMouseoverUnit then
+            SetMouseoverUnit(nil)
+        end
     end)
 end
 
@@ -240,108 +260,167 @@ end
 
 
 local testUnitCount = 10
+local cachedZone = ""
 
-local function renderTestVisuals()
-    for i = 1, unitLimit do
-        if i <= testUnitCount and i <= #TEST_UNITS then
-            local data = TEST_UNITS[i]
-            local clr = RAID_CLASS_COLORS[data.class] or RAID_CLASS_COLORS['WARRIOR']
-            local pClr = RGB_POWER_COLORS[data.powerType] or RGB_POWER_COLORS['mana']
+local function UpdateCardVisuals(btn, data, isAV, isAVMode)
+    if not btn or not data then return end
 
-            units[i].name:SetText(data.name:sub(1, 9))
-            units[i].name:Show()
-            units[i].tar = data.name
-            units[i].guid = "0xTEST" .. i
-            units[i].hoverEnabled = true
+    local class = data.class or 'WARRIOR'
+    local powerType = data.powerType or ((class == 'WARRIOR' and 'rage') or (class == 'ROGUE' and 'energy') or 'mana')
+    local colour = RAID_CLASS_COLORS[class] or RAID_CLASS_COLORS['WARRIOR']
+    local powerColor = RGB_POWER_COLORS[powerType] or RGB_POWER_COLORS['mana']
+    local isNearby = (data.nearby ~= false)
 
-            units[i].hpbar:SetStatusBarColor(clr.r, clr.g, clr.b)
-            units[i].manabar:SetStatusBarColor(pClr[1], pClr[2], pClr[3])
+    if isNearby then
+        btn.hpbar:SetStatusBarColor(colour.r, colour.g, colour.b)
+        btn.hoverEnabled = true
+        if not btn.mo then btn.name:SetTextColor(colour.r, colour.g, colour.b) end
+        btn.manabar:SetStatusBarColor(powerColor[1], powerColor[2], powerColor[3])
+        btn.cc.icon:SetVertexColor(1, 1, 1, 1)
+    else
+        btn.hpbar:SetStatusBarColor(colour.r * 0.35, colour.g * 0.35, colour.b * 0.35)
+        btn.hoverEnabled = false
+        btn.name:SetTextColor(colour.r * 0.45, colour.g * 0.45, colour.b * 0.45)
+        btn.manabar:SetStatusBarColor(powerColor[1] * 0.35, powerColor[2] * 0.35, powerColor[3] * 0.35)
+        btn.cc.icon:SetVertexColor(0.4, 0.4, 0.4, 1)
+    end
 
-            units[i].hpbar:SetMinMaxValues(0, data.maxHp)
-            units[i].hpbar:SetValue(data.hp)
+    btn.tar = data.name
+    btn.guid = data.guid
+    btn.name:SetText(data.name:sub(1, isAVMode and 6 or 7))
 
-            units[i].manabar:SetMinMaxValues(0, data.maxMana)
-            units[i].manabar:SetValue(data.mana)
+    if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayNames'] == false then
+        btn.name:Hide()
+    else
+        btn.name:Show()
+    end
 
-            local hpFormatted
-            if data.maxHp > 100 and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayHealthValues'] then
-                hpFormatted = (data.hp >= 1000) and string.format("%.1fk", data.hp / 1000) or tostring(data.hp)
-            else
-                local pct = math.floor((data.hp / data.maxHp) * 100)
-                hpFormatted = pct .. "%"
-            end
-            units[i].hpText:SetText(hpFormatted)
-            units[i].hpText:Show()
+    -- Target count badge
+    local tarCount = data.targetcount or data.tarCount or 0
+    if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['targetCounter'] and tarCount > 0 then
+        btn.targetCount.text:SetText(tarCount)
+        btn.targetCount.text:Show()
+    else
+        btn.targetCount.text:SetText("")
+        btn.targetCount.text:Hide()
+    end
 
-            if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManaValues'] and data.powerType == 'mana' then
-                local manaFormatted = (data.mana >= 1000) and string.format("%.1fk", data.mana / 1000) or tostring(data.mana)
-                units[i].manaText:SetText(manaFormatted)
-                units[i].manaText:Show()
-            else
-                units[i].manaText:Hide()
-            end
+    -- Health (UnitXP SP3)
+    local maxHP = data.maxhealth or data.maxHp or 100
+    local currHP = data.health or data.hp or (not isNearby and maxHP) or 100
+    btn.hpbar:SetMinMaxValues(0, maxHP)
+    btn.hpbar:SetValue(currHP)
 
-            -- Live 3D Distance preview (alternate yard tags for test realism)
-            if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['showDistance'] ~= false then
-                local d = 8 + (i * 3)
-                local dColor = (d <= 10 and "|cffff4444") or (d <= 30 and "|cffffff44") or "|cff44ff44"
-                units[i].distText:SetText(dColor .. d .. "y|r")
-                units[i].distText:Show()
-            else
-                units[i].distText:Hide()
-            end
+    if maxHP > 100 and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayHealthValues'] then
+        btn.hpText:SetText((currHP >= 1000) and string.format("%.1fk", currHP / 1000) or tostring(currHP))
+    else
+        local pct = (maxHP > 0) and math.floor((currHP / maxHP) * 100) or 100
+        btn.hpText:SetText(pct .. "%")
+    end
+    btn.hpText:Show()
 
-            -- CC / Class Icon & Cast Bar (Integrated Overlay - Hides name/hp while casting for zero collision)
-            if data.spell and data.cast > 0 and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['castTimers'] ~= false then
-                units[i].ffCastbar:SetMinMaxValues(0, data.castMax)
-                units[i].ffCastbar:SetValue(data.castMax - data.cast)
-                units[i].ffCastbar.text:SetText(data.spell)
-                units[i].ffCastbar.timer:SetText(data.cast .. "s")
-                units[i].ffCastbar:Show()
-                units[i].name:Hide()
-                units[i].hpText:Hide()
-                units[i].distText:Hide()
-                units[i].manaText:Hide()
-                if data.icon then
-                    units[i].cc.icon:SetTexture(data.icon)
-                else
-                    units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', data.class))
-                end
-            else
-                units[i].ffCastbar:Hide()
-                if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayNames'] ~= false then
-                    units[i].name:Show()
-                else
-                    units[i].name:Hide()
-                end
-                units[i].hpText:Show()
-                if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['showDistance'] ~= false then
-                    units[i].distText:Show()
-                else
-                    units[i].distText:Hide()
-                end
-                if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManaValues'] and data.powerType == 'mana' then
-                    units[i].manaText:Show()
-                else
-                    units[i].manaText:Hide()
-                end
-                units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', data.class))
-            end
-            units[i].cc.icon:SetVertexColor(1, 1, 1, 1)
+    -- Mana / Power
+    local maxMana = data.maxmana or data.maxMana or 100
+    local currMana = data.mana or (not isNearby and maxMana) or 100
+    btn.manabar:SetMinMaxValues(0, maxMana)
+    btn.manabar:SetValue(currMana)
 
-            -- Target Count
-            if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['targetCounter'] and data.tarCount > 0 then
-                units[i].targetCount.text:SetText(data.tarCount)
-                units[i].targetCount.text:Show()
-            else
-                units[i].targetCount.text:SetText("")
-                units[i].targetCount.text:Hide()
-            end
-
-            units[i]:Show()
+    local showMana = (not isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManabar']) or (isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avShowMana'])
+    if showMana and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManaValues'] and powerType == 'mana' then
+        if maxMana > 100 then
+            btn.manaText:SetText((currMana >= 1000) and string.format("%.1fk", currMana / 1000) or tostring(currMana))
         else
-            units[i]:Hide()
+            btn.manaText:SetText(math.floor(currMana) .. "%")
         end
+        btn.manaText:Show()
+    else
+        btn.manaText:Hide()
+    end
+
+    -- 4-Stage Canonical Distance Color Grading (Rule B8)
+    local dist = data.distance or (FOSTERFRAMES_TESTMODE and (8 + (btn.index * 3)))
+    if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['showDistance'] ~= false and dist and dist > 0 and dist < 120 and isNearby then
+        local d = math.floor(dist)
+        local _, _, _, dColorHex = FosterFrames.Helpers.GetDistanceColor(d)
+        btn.distText:SetText(dColorHex .. d .. "y|r")
+        btn.distText:Show()
+    else
+        btn.distText:SetText("")
+        btn.distText:Hide()
+    end
+
+    -- Target Border Highlight
+    local currentTarget = UnitExists('target') and UnitName('target') or nil
+    if currentTarget == data.name then
+        btn.border:SetColor(enemyFactionColor.r, enemyFactionColor.g, enemyFactionColor.b)
+        btn.hpbar:SetBackdropColor(enemyFactionColor.r - 0.6, enemyFactionColor.g - 0.6, enemyFactionColor.b - 0.6, 0.6)
+        btn.manabar:SetBackdropColor(enemyFactionColor.r - 0.6, enemyFactionColor.g - 0.6, enemyFactionColor.b - 0.6, 0.6)
+    else
+        btn.border:SetColor(0.1, 0.1, 0.1)
+        btn.hpbar:SetBackdropColor(0, 0, 0, 0.6)
+        btn.manabar:SetBackdropColor(0, 0, 0, 0.6)
+    end
+
+    -- Casting State vs Resting State (Rule C9: Single-State UI Rendering)
+    local unitID = (currentTarget == data.name and 'target') or (UnitExists('mouseover') and UnitName('mouseover') == data.name and 'mouseover') or nil
+    local castInfo = (not FOSTERFRAMES_TESTMODE and SPELLCASTINGCOREgetCast(data.name, unitID)) or data.castinfo or (FOSTERFRAMES_TESTMODE and data.spell and data.cast > 0 and {
+        spell     = data.spell,
+        icon      = data.icon,
+        timeStart = GetTime() - (data.castMax - data.cast),
+        timeEnd   = GetTime() + data.cast,
+        inverse   = false,
+    })
+
+    if castInfo and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['castTimers'] ~= false and GetTime() < castInfo.timeEnd then
+        local duration = castInfo.timeEnd - castInfo.timeStart
+        if duration <= 0 then duration = 1 end
+        btn.ffCastbar:SetMinMaxValues(0, duration)
+        local now = GetTime()
+        if castInfo.inverse then
+            btn.ffCastbar:SetValue((castInfo.timeEnd - now) % duration)
+        else
+            btn.ffCastbar:SetValue((now - castInfo.timeStart) % duration)
+        end
+        btn.ffCastbar.text:SetText((castInfo.spell or ''):sub(1, 12))
+        btn.ffCastbar.timer:SetText(FosterFrames.Helpers.GetTimerLeft(castInfo.timeEnd, 3) .. 's')
+        btn.ffCastbar:Show()
+
+        btn.name:Hide()
+        btn.hpText:Hide()
+        btn.distText:Hide()
+        btn.manaText:Hide()
+
+        if castInfo.icon then
+            btn.cc.icon:SetTexture(castInfo.icon)
+        else
+            btn.cc.icon:SetTexture(GET_DEFAULT_ICON('class', class))
+        end
+        if btn.cc.cd then btn.cc.cd:Hide() end
+    else
+        btn.ffCastbar:Hide()
+        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayNames'] ~= false then
+            btn.name:Show()
+        end
+        btn.hpText:Show()
+
+        local trinket = data.guid and FOSTERFRAMECOREGetTrinketCooldown and FOSTERFRAMECOREGetTrinketCooldown(data.guid)
+        if trinket then
+            btn.cc.icon:SetTexture(trinket.icon or [[Interface\Icons\inv_jewelry_trinketpvp_01]])
+            if btn.cc.cd then
+                btn.cc.cd:SetTimers(trinket.start, trinket['end'])
+                btn.cc.cd:Show()
+            end
+        else
+            btn.cc.icon:SetTexture(GET_DEFAULT_ICON('class', class))
+            if btn.cc.cd then btn.cc.cd:Hide() end
+        end
+    end
+
+    local hideFarInAV = isAV and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avShowOnlyNearby']
+    if ((FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayOnlyNearby']) or hideFarInAV) and not isNearby then
+        btn:Hide()
+    else
+        btn:Show()
     end
 end
 
@@ -379,7 +458,7 @@ end
 local function arrangeUnits()
     if not FOSTERFRAMESPLAYERDATA then return end
 
-    local currentZoneName = GetZoneText()
+    local currentZoneName = (cachedZone ~= "") and cachedZone or GetZoneText()
     local isAV = (currentZoneName == 'Alterac Valley') or (FOSTERFRAMES_TESTMODE and testUnitCount == 40)
     local isAVMode = isAV and (FOSTERFRAMESPLAYERDATA['avMode'] ~= false)
     local isWSG = (currentZoneName == 'Warsong Gulch') or (FOSTERFRAMES_TESTMODE and testUnitCount == 10)
@@ -468,113 +547,25 @@ local function SetupFrames(maxU)
     showHideBars()
 
     if FOSTERFRAMES_DEBUG or FOSTERFRAMES_TESTMODE then
-        renderTestVisuals()
+        drawUnits(TEST_UNITS)
     end
 end
 
-
 local function drawUnits(list)
-    if FOSTERFRAMES_TESTMODE then return end
-    fosterFrame.uiList = list or {}
-    local i = 1
-
-    local currentZoneName = GetZoneText()
-    local isAV = (currentZoneName == 'Alterac Valley')
+    local sourceList = FOSTERFRAMES_TESTMODE and TEST_UNITS or (list or {})
+    fosterFrame.uiList = sourceList
+    local count = FOSTERFRAMES_TESTMODE and testUnitCount or table.getn(sourceList)
+    local isAV = (cachedZone == 'Alterac Valley')
     local isAVMode = isAV and (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avMode'] ~= false)
-    local hideFarInAV = isAV and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avShowOnlyNearby']
 
-    for _, v in pairs(fosterFrame.uiList) do
+    local i = 1
+    for idx = 1, count do
         if i > unitLimit then break end
-
-        local class = v.class or 'WARRIOR'
-        local powerType = v.powerType or 'mana'
-        local colour = RAID_CLASS_COLORS[class] or RAID_CLASS_COLORS['WARRIOR']
-        local powerColor = RGB_POWER_COLORS[powerType] or RGB_POWER_COLORS['mana']
-
-        if v.nearby then
-            units[i].hpbar:SetStatusBarColor(colour.r, colour.g, colour.b)
-            units[i].hoverEnabled = true
-            if not units[i].mo then units[i].name:SetTextColor(colour.r, colour.g, colour.b) end
-            units[i].manabar:SetStatusBarColor(powerColor[1], powerColor[2], powerColor[3])
-            units[i].cc.icon:SetVertexColor(1, 1, 1, 1)
-        else
-            units[i].hpbar:SetStatusBarColor(colour.r * 0.35, colour.g * 0.35, colour.b * 0.35)
-            units[i].hoverEnabled = false
-            units[i].name:SetTextColor(colour.r * 0.45, colour.g * 0.45, colour.b * 0.45)
-            units[i].manabar:SetStatusBarColor(powerColor[1] * 0.35, powerColor[2] * 0.35, powerColor[3] * 0.35)
-            units[i].cc.icon:SetVertexColor(0.4, 0.4, 0.4, 1)
+        local v = sourceList[idx]
+        if v then
+            UpdateCardVisuals(units[i], v, isAV, isAVMode)
+            i = i + 1
         end
-
-        units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', class))
-
-
-        units[i].tar = v.name
-        units[i].guid = v.guid
-        units[i].name:SetText(v.name:sub(1, isAVMode and 6 or 7))
-
-        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayNames'] == false then
-            units[i].name:Hide()
-        else
-            units[i].name:Show()
-        end
-
-        -- Target count
-        units[i].targetCount.text:SetText(v.targetcount and (v.targetcount > 0 and v.targetcount or '') or '')
-
-        -- HP & Mana display (UnitXP SP3)
-        local maxHP = v.maxhealth or 100
-        local currHP = v.health or (not v.nearby and maxHP) or 100
-        units[i].hpbar:SetMinMaxValues(0, maxHP)
-        units[i].hpbar:SetValue(currHP)
-
-        -- Live 3D Distance display
-        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['showDistance'] ~= false and v.distance and v.distance > 0 and v.distance < 120 and v.nearby then
-            local d = math.floor(v.distance)
-            local dColor = (d <= 10 and "|cffff4444") or (d <= 30 and "|cffffff44") or "|cff44ff44"
-            units[i].distText:SetText(dColor .. d .. "y|r")
-            units[i].distText:Show()
-        else
-            units[i].distText:SetText("")
-            units[i].distText:Hide()
-        end
-
-        local hpFormatted
-        if maxHP > 100 and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayHealthValues'] then
-            hpFormatted = (currHP >= 1000) and string.format("%.1fk", currHP / 1000) or tostring(currHP)
-        else
-            local pct = (maxHP > 0) and math.floor((currHP / maxHP) * 100) or 100
-            hpFormatted = pct .. "%"
-        end
-        units[i].hpText:SetText(hpFormatted)
-        units[i].hpText:Show()
-
-
-        local maxMana = v.maxmana or 100
-        local currMana = v.mana or (not v.nearby and maxMana) or 100
-        units[i].manabar:SetMinMaxValues(0, maxMana)
-        units[i].manabar:SetValue(currMana)
-
-        local showMana = (not isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManabar']) or (isAVMode and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avShowMana'])
-        if showMana and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayManaValues'] and v.class ~= 'WARRIOR' and v.class ~= 'ROGUE' then
-            local manaFormatted
-            if maxMana > 100 then
-                manaFormatted = (currMana >= 1000) and string.format("%.1fk", currMana / 1000) or tostring(currMana)
-            else
-                manaFormatted = tostring(math.floor(currMana)) .. "%"
-            end
-            units[i].manaText:SetText(manaFormatted)
-            units[i].manaText:Show()
-        else
-            units[i].manaText:Hide()
-        end
-
-        if ((FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayOnlyNearby']) or hideFarInAV) and not v.nearby then
-            units[i]:Hide()
-        else
-            units[i]:Show()
-        end
-
-        i = i + 1
     end
 
     for j = i, unitLimit do
@@ -585,117 +576,29 @@ local function drawUnits(list)
 end
 
 local function updateUnits()
-    if FOSTERFRAMES_TESTMODE then return end
-    local now = GetTime()
     if not fosterFrame.uiList then return end
-
-    local currentTarget = UnitExists('target') and UnitName('target') or nil
-    local currentMouseover = UnitExists('mouseover') and UnitName('mouseover') or nil
+    local isAV = (cachedZone == 'Alterac Valley')
+    local isAVMode = isAV and (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avMode'] ~= false)
+    local count = FOSTERFRAMES_TESTMODE and testUnitCount or table.getn(fosterFrame.uiList)
 
     local i = 1
-    for _, v in pairs(fosterFrame.uiList) do
-        if i > unitLimit then return end
-
-        local unitID = (currentTarget == v.name and 'target') or (currentMouseover == v.name and 'mouseover') or nil
-
-        -- Border highlights
-        if currentTarget == v.name then
-            units[i].border:SetColor(enemyFactionColor.r, enemyFactionColor.g, enemyFactionColor.b)
-            units[i].hpbar:SetBackdropColor(enemyFactionColor.r - 0.6, enemyFactionColor.g - 0.6, enemyFactionColor.b - 0.6, 0.6)
-            units[i].manabar:SetBackdropColor(enemyFactionColor.r - 0.6, enemyFactionColor.g - 0.6, enemyFactionColor.b - 0.6, 0.6)
-        else
-            units[i].border:SetColor(0.1, 0.1, 0.1)
-            units[i].hpbar:SetBackdropColor(0, 0, 0, 0.6)
-            units[i].manabar:SetBackdropColor(0, 0, 0, 0.6)
+    for idx = 1, count do
+        if i > unitLimit then break end
+        local v = fosterFrame.uiList[idx]
+        if v then
+            UpdateCardVisuals(units[i], v, isAV, isAVMode)
+            i = i + 1
         end
-
-        -- Cast bar (UnitCastingInfo / UnitChannelInfo - Integrated In-Card Progress)
-        local castInfo = SPELLCASTINGCOREgetCast(v.name, unitID)
-        if castInfo and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['castTimers'] ~= false then
-            local duration = castInfo.timeEnd - castInfo.timeStart
-            units[i].ffCastbar:SetMinMaxValues(0, duration)
-            if castInfo.inverse then
-                units[i].ffCastbar:SetValue((castInfo.timeEnd - now) % duration)
-            else
-                units[i].ffCastbar:SetValue((now - castInfo.timeStart) % duration)
-            end
-            units[i].ffCastbar.text:SetText((castInfo.spell or ''):sub(1, 12))
-            units[i].ffCastbar.timer:SetText(FosterFrames.Helpers.GetTimerLeft(castInfo.timeEnd, 3) .. 's')
-            units[i].ffCastbar:Show()
-            units[i].name:Hide()
-            units[i].hpText:Hide()
-            units[i].distText:Hide()
-            units[i].manaText:Hide()
-            if castInfo.icon then
-                units[i].cc.icon:SetTexture(castInfo.icon)
-            end
-        else
-            units[i].ffCastbar:Hide()
-            if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayNames'] ~= false then
-                units[i].name:Show()
-            else
-                units[i].name:Hide()
-            end
-            units[i].hpText:Show()
-            local trinket = FOSTERFRAMECOREGetTrinketCooldown(v.guid)
-            if trinket then
-                units[i].cc.icon:SetTexture(trinket.icon or [[Interface\Icons\inv_jewelry_trinketpvp_01]])
-                units[i].cc.cd:SetTimers(trinket.start, trinket['end'])
-                units[i].cc.cd:Show()
-            else
-                units[i].cc.icon:SetTexture(GET_DEFAULT_ICON('class', v.class))
-            end
-        end
-
-
-        -- Target count live update
-        local tarCount = v.targetcount or 0
-        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['targetCounter'] and tarCount > 0 then
-            units[i].targetCount.text:SetText(tarCount)
-            units[i].targetCount.text:Show()
-        else
-            units[i].targetCount.text:SetText("")
-            units[i].targetCount.text:Hide()
-        end
-
-
-        -- Live 3D Distance display update
-        if FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['showDistance'] ~= false and v.distance and v.distance > 0 and v.distance < 120 and v.nearby then
-            local d = math.floor(v.distance)
-            local dColor = (d <= 10 and "|cffff4444") or (d <= 30 and "|cffffff44") or "|cff44ff44"
-            units[i].distText:SetText(dColor .. d .. "y|r")
-            units[i].distText:Show()
-        else
-            units[i].distText:SetText("")
-            units[i].distText:Hide()
-        end
-
-        local currentZoneName = GetZoneText()
-        local isAV = (currentZoneName == 'Alterac Valley')
-        local hideFarInAV = isAV and FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avShowOnlyNearby']
-
-
-        if ((FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['displayOnlyNearby']) or hideFarInAV) and not v.nearby then
-            units[i]:Hide()
-        else
-            units[i]:Show()
-        end
-
-        i = i + 1
     end
 end
-
 
 local function fosterFramesOnUpdate()
     nextRefresh = nextRefresh - (arg1 or 0.016)
     if nextRefresh <= 0 then
-        if not FOSTERFRAMES_TESTMODE then
-            updateUnits()
-        end
+        updateUnits()
         nextRefresh = refreshInterval
     end
 end
-
 
 --- Global Entry Points ---
 
@@ -708,6 +611,7 @@ end
 function FOSTERFRAMESInitialize(maxU, isBG)
     insideBG = isBG
     MOUSEOVERUNINAME = nil
+    cachedZone = GetZoneText() or ""
 
     if maxU then
         SetupFrames(maxU)
@@ -730,7 +634,7 @@ function FOSTERFRAMESsettings()
     optionals()
     if FOSTERFRAMES_TESTMODE or not enabled or (not insideBG and (fosterFramesSettings and fosterFramesSettings:IsShown())) then
         SetupFrames(testUnitCount)
-        renderTestVisuals()
+        drawUnits(TEST_UNITS)
     else
         SetupFrames(maxUnits)
     end
@@ -757,7 +661,7 @@ function FOSTERFRAMES_SetTestMode(enable, count)
         SetupFrames(testUnitCount)
         arrangeUnits()
         optionals()
-        renderTestVisuals()
+        drawUnits(TEST_UNITS)
         fosterFrame:Show()
     else
         if not insideBG and not (fosterFramesSettings and fosterFramesSettings:IsShown()) then

@@ -69,6 +69,7 @@ function CreateEnemyUnitFrame(name, parentFrame)
 
     btn.cc.border = CreateBorder(nil, btn.cc, 10, 1 / 5)
     btn.cc.border:SetFrameLevel(5)
+    btn.cc.border:EnableMouse(false)
 
     btn.cc.icon = btn.cc:CreateTexture(nil, 'ARTWORK')
     btn.cc.icon:SetAllPoints()
@@ -81,6 +82,7 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.cc.durationFrame = CreateFrame('Frame', nil, btn.cc)
     btn.cc.durationFrame:SetAllPoints()
     btn.cc.durationFrame:SetFrameLevel(6)
+    btn.cc.durationFrame:EnableMouse(false)
 
     btn.cc.duration = btn.cc.durationFrame:CreateFontString(nil, 'OVERLAY')
     btn.cc.duration:SetFont(STANDARD_TEXT_FONT, 9, 'OUTLINE')
@@ -91,6 +93,7 @@ function CreateEnemyUnitFrame(name, parentFrame)
 
     btn.cc.cd = CreateCooldown(btn.cc, 0.58, true)
     btn.cc.cd:SetAlpha(1)
+    btn.cc.cd:EnableMouse(false)
 
     -- Integrated In-Card Castbar (Overlay directly inside hpbar - Zero overlap between rows!)
     btn.ffCastbar = CreateFrame('StatusBar', nil, btn.hpbar)
@@ -164,6 +167,7 @@ function CreateEnemyUnitFrame(name, parentFrame)
     btn.targetCount:SetHeight(14)
     btn.targetCount:SetPoint('TOPLEFT', btn.hpbar, 'TOPLEFT', 0, 2)
     btn.targetCount:SetFrameLevel(7)
+    btn.targetCount:EnableMouse(false)
 
     btn.targetCount.text = btn.targetCount:CreateFontString(nil, 'OVERLAY')
     btn.targetCount.text:SetFont(STANDARD_TEXT_FONT, 9, 'OUTLINE')

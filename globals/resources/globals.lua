@@ -1,6 +1,12 @@
 -- FosterFrames - Global Constants, Palettes, and Utilities
 -- Enhanced 1.12.1 Engine Stack (ClassicAPI, SuperWoW, NamPower, UnitXP SP3, DXVK)
 
+-- Mandatory Engine Dependency Guard
+if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) then
+    DEFAULT_CHAT_FRAME:AddMessage("|cffff2020[Fatal Error]|r FosterFrames requires ClassicAPI.dll & SuperWoW! Please ensure ClassicAPI.dll and SuperWoW are loaded.", 1, 0.2, 0.2)
+    return
+end
+
 FosterFrames = FosterFrames or {}
 FosterFrames.Config = FosterFrames.Config or {}
 FosterFrames.Helpers = FosterFrames.Helpers or {}

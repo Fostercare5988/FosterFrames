@@ -1,10 +1,23 @@
 -- FosterFrames - Addon Communication Handler
 -- Enhanced 1.12.1 Engine Stack (ClassicAPI / Zero GC Churn)
 
+if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) then return end
+
 local msgPrefix = {
     ['EFC']  = 'BGEFEFC',
-    ['BF']   = 'BGEFEBF',
     ['SCAN'] = 'BGEFSCN',
+}
+
+local spottedUnitBuffer = {
+    name   = nil,
+    class  = nil,
+    guid   = nil,
+    nearby = true,
+}
+
+local efcBuffer = {
+    Alliance = nil,
+    Horde    = nil,
 }
 
 function sendMSG(typ, d, icon, bg)
@@ -18,31 +31,21 @@ end
 
 local function handleScan(message)
     local sender, name, class, guid = message:match("([^/]+)/([^/]+)/([^/]+)/([^/]+)")
-    if sender and sender ~= UnitName('player') then
-        local u = {
-            ['name']  = name,
-            ['class'] = (class ~= ' ' and class) or nil,
-            ['guid']  = (guid ~= ' ' and guid) or nil,
-        }
-        FOSTERFRAMECOREAddSpottedUnit(u)
+    if sender and sender ~= UnitName('player') and name and name ~= "" then
+        spottedUnitBuffer.name   = name
+        spottedUnitBuffer.class  = (class ~= ' ' and class) or nil
+        spottedUnitBuffer.guid   = (guid ~= ' ' and guid) or nil
+        spottedUnitBuffer.nearby = true
+        FOSTERFRAMECOREAddSpottedUnit(spottedUnitBuffer)
     end
 end
 
 local function handleEFC(message)
     local sender, allianceEFC, hordeEFC = message:match("([^/]+)/([^/]+)/([^/]+)")
     if sender and sender ~= UnitName('player') then
-        local fc = {
-            ['Alliance'] = (allianceEFC ~= ' ' and allianceEFC) or nil,
-            ['Horde']    = (hordeEFC ~= ' ' and hordeEFC) or nil,
-        }
-        FOSTERFRAMECOREUpdateFlagCarriers(fc)
-    end
-end
-
-local function handleBuff(message)
-    local sender, tar, spell, dur = message:match("([^/]+)/([^/]+)/([^/]+)/([^/]+)")
-    if sender and sender ~= UnitName('player') then
-        SPELLCASTINGCOREaddBuff(tar, spell, dur)
+        efcBuffer.Alliance = (allianceEFC ~= ' ' and allianceEFC) or nil
+        efcBuffer.Horde    = (hordeEFC ~= ' ' and hordeEFC) or nil
+        FOSTERFRAMECOREUpdateFlagCarriers(efcBuffer)
     end
 end
 
@@ -57,7 +60,5 @@ f:SetScript('OnEvent', function()
         handleEFC(message)
     elseif prefix == msgPrefix['SCAN'] then
         handleScan(message)
-    elseif prefix == msgPrefix['BF'] then
-        handleBuff(message)
     end
 end)

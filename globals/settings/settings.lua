@@ -205,7 +205,7 @@ local TABS_CONFIG = {
                 tooltipText = 'Displays numeric countdown seconds and cooldown spirals directly on TargetFrame buff and debuff icons.'
             },
             {
-                id = 'playerTargetCounter',
+                id = 'targetCounter',
                 label = 'Player Target Counter (Teammate Focus Indicator)',
                 tooltipTitle = 'Focus Fire Target Counter',
                 tooltipText = 'Shows the number of raid/party members currently targeting each enemy unit card for instant focus fire coordination.'
@@ -628,21 +628,30 @@ eventFrame:SetScript('OnEvent', function()
     end
 end)
 
--- Slash Commands
+-- Slash Commands (Rule F3: O(1) Dispatch Table)
 SLASH_FOSTERFRAMES1 = '/ff'
 SLASH_FOSTERFRAMES2 = '/fosterframes'
 SLASH_FOSTERFRAMES3 = '/ffs'
+
+local slashCommands = {
+    ['15']    = function() FOSTERFRAMES_SetTestMode(true, 15) end,
+    ['ab']    = function() FOSTERFRAMES_SetTestMode(true, 15) end,
+    ['10']    = function() FOSTERFRAMES_SetTestMode(true, 10) end,
+    ['wsg']   = function() FOSTERFRAMES_SetTestMode(true, 10) end,
+    ['debug'] = function() FOSTERFRAMES_SetTestMode(true, 10) end,
+    ['test']  = function() FOSTERFRAMES_SetTestMode(true, 10) end,
+    ['40']    = function() FOSTERFRAMES_SetTestMode(true, 40) end,
+    ['av']    = function() FOSTERFRAMES_SetTestMode(true, 40) end,
+    ['hide']  = function() FOSTERFRAMES_HideFrames() end,
+    ['off']   = function() FOSTERFRAMES_HideFrames() end,
+    ['data']  = function() FOSTERFRAMES_DebugDisplayPlayerData() end,
+}
+
 SlashCmdList["FOSTERFRAMES"] = function(msg)
-    if msg == '15' or msg == 'ab' then
-        FOSTERFRAMES_SetTestMode(true, 15)
-    elseif msg == '10' or msg == 'wsg' or msg == 'debug' or msg == 'test' then
-        FOSTERFRAMES_SetTestMode(true, 10)
-    elseif msg == '40' or msg == 'av' then
-        FOSTERFRAMES_SetTestMode(true, 40)
-    elseif msg == 'hide' or msg == 'off' then
-        FOSTERFRAMES_HideFrames()
-    elseif msg == 'data' then
-        FOSTERFRAMES_DebugDisplayPlayerData()
+    local cmd = string.lower(msg or "")
+    local handler = slashCommands[cmd]
+    if handler then
+        handler()
     else
         if settings:IsShown() then
             closeSettings()

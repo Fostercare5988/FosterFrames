@@ -1,6 +1,8 @@
 -- FosterFrames - TargetFrame Extensions (Castbar, Flag Carrier Indicator, Debuff Timers)
 -- Enhanced 1.12.1 Engine Stack (ClassicAPI, SuperWoW, UnitXP SP3)
 
+if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) then return end
+
 local refreshInterval = 1 / 60
 local nextRefresh = 0
 local flagCarriers = {}
@@ -232,6 +234,7 @@ local function addExtras(button)
     button.ft = CreateFrame('Frame', button:GetName() .. 'TextFrame', button)
     button.ft:SetFrameLevel(4)
     button.ft:SetAllPoints()
+    button.ft:EnableMouse(false)
 
     button.text = button.ft:CreateFontString(nil, 'OVERLAY')
     button.text:SetFont(STANDARD_TEXT_FONT, 10, 'OUTLINE')
@@ -241,7 +244,9 @@ local function addExtras(button)
 
     button.f = CreateFrame('Frame', button:GetName() .. 'CooldownFrame', button)
     button.f:SetAllPoints()
+    button.f:EnableMouse(false)
     button.cd = CreateCooldown(button.f, 0.4, true)
+    button.cd:EnableMouse(false)
 
     local icon = _G[button:GetName() .. 'Icon']
     if icon then icon:SetTexCoord(0.05, 0.95, 0.05, 0.95) end

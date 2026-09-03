@@ -157,7 +157,7 @@ end
 
 local function applyNearbyPlayer(v, now, nextCheck)
     local id = v.name
-    if not id or id == "" or id == "Unknown" or id == "Unbekannt" or id == "Inconnu" then
+    if not id or id == "" or id == "Unknown" or id == "Unbekannt" or id == "Inconnu" or id:sub(1, 7) == "Unknown" or id:sub(1, 6) == "Unknow" then
         return
     end
 
@@ -201,7 +201,8 @@ local function verifyUnitInfo(unit, now)
     now = now or GetTime()
     if UnitExists(unit) and UnitIsPlayer(unit) and UnitFactionGroup(unit) ~= playerFaction then
         local name = UnitName(unit)
-        if not name or name == "" then return false end
+        if not name or name == "" or name == "Unknown" or name == "Unbekannt" or name == "Inconnu" or name:sub(1, 7) == "Unknown" or name:sub(1, 6) == "Unknow" then return false end
+
 
         local _, class = UnitClass(unit)
         local h, mh = getExactHealth(unit)
@@ -247,6 +248,7 @@ end
 
 local function processCombatUnit(guid, name, flags, now, nextCheck)
     if not guid or guid == "" or not name or name == "" then return end
+    if name == "Unknown" or name == "Unbekannt" or name == "Inconnu" or name:sub(1, 7) == "Unknown" or name:sub(1, 6) == "Unknow" then return end
     local isEnemy = bit.band(flags or 0, 64) ~= 0
     local isPlayer = bit.band(flags or 0, 1024) ~= 0
 
@@ -487,8 +489,10 @@ local function orderUnitsforOutput()
     table.wipe(sortBuffer)
     local count = 0
     for _, v in pairs(playerList) do
-        count = count + 1
-        sortBuffer[count] = v
+        if v.name and v.name ~= "" and v.name ~= "Unknown" and v.name:sub(1, 7) ~= "Unknown" and v.name:sub(1, 6) ~= "Unknow" then
+            count = count + 1
+            sortBuffer[count] = v
+        end
     end
     table.setn(sortBuffer, count)
 
@@ -540,6 +544,7 @@ end
 
 function FOSTERFRAMECOREAddSpottedUnit(u)
     if not (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['openWorldScanning']) then return end
+    if not u or not u.name or u.name == "" or u.name == "Unknown" or u.name:sub(1, 7) == "Unknown" or u.name:sub(1, 6) == "Unknow" then return end
     local id = u.guid or u.name
     local isNew = (playerList[id] == nil)
 
@@ -551,6 +556,7 @@ function FOSTERFRAMECOREAddSpottedUnit(u)
         broadcastSpottedEnemy(p.name, p.class, p.guid)
     end
 end
+
 
 function FOSTERFRAMECOREUpdateFlagCarriers(fc)
     currentFlagCarriers = fc or {}
@@ -715,9 +721,10 @@ local function eventHandler()
 
         for i = 1, numScores do
             local name, kb, hk, deaths, honor, faction, race, class, classToken = GetBattlefieldScore(i)
-            if faction == enemyFactionID and name then
+            if faction == enemyFactionID and name and name ~= "Unknown" and name:sub(1, 7) ~= "Unknown" and name:sub(1, 6) ~= "Unknow" then
                 currentEnemies[name] = true
                 if not playerList[name] then
+
                     playerList[name] = {
                         name      = name,
                         class     = string.upper(classToken or class or 'WARRIOR'),

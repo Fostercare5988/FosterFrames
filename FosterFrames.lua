@@ -24,8 +24,10 @@ local enabled = false
 FOSTERFRAMES_DEBUG = false
 FOSTERFRAMES_TESTMODE = false
 MOUSEOVERUNINAME = nil
+local drawUnits, updateUnits
 
 local BACKDROP = { bgFile = [[Interface\Tooltips\UI-Tooltip-Background]] }
+
 
 -- Main Display Container
 fosterFrameDisplay = CreateFrame('Frame', 'fosterFrameDisplay', UIParent)
@@ -527,6 +529,30 @@ local function showHideBars()
     fosterFrameDisplay:EnableMouse(true)
 end
 
+local function drawUnits(list)
+    local sourceList = FOSTERFRAMES_TESTMODE and TEST_UNITS or (list or {})
+    fosterFrame.uiList = sourceList
+    local count = FOSTERFRAMES_TESTMODE and testUnitCount or table.getn(sourceList)
+    local isAV = (cachedZone == 'Alterac Valley')
+    local isAVMode = isAV and (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avMode'] ~= false)
+
+    local i = 1
+    for idx = 1, count do
+        if i > unitLimit then break end
+        local v = sourceList[idx]
+        if v then
+            UpdateCardVisuals(units[i], v, isAV, isAVMode)
+            i = i + 1
+        end
+    end
+
+    for j = i, unitLimit do
+        if units[j]:IsShown() then
+            units[j]:Hide()
+        end
+    end
+end
+
 local function SetupFrames(maxU)
     maxUnits = maxU or 40
     if maxUnits < 1 then maxUnits = 1 end
@@ -551,29 +577,6 @@ local function SetupFrames(maxU)
     end
 end
 
-local function drawUnits(list)
-    local sourceList = FOSTERFRAMES_TESTMODE and TEST_UNITS or (list or {})
-    fosterFrame.uiList = sourceList
-    local count = FOSTERFRAMES_TESTMODE and testUnitCount or table.getn(sourceList)
-    local isAV = (cachedZone == 'Alterac Valley')
-    local isAVMode = isAV and (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['avMode'] ~= false)
-
-    local i = 1
-    for idx = 1, count do
-        if i > unitLimit then break end
-        local v = sourceList[idx]
-        if v then
-            UpdateCardVisuals(units[i], v, isAV, isAVMode)
-            i = i + 1
-        end
-    end
-
-    for j = i, unitLimit do
-        if units[j]:IsShown() then
-            units[j]:Hide()
-        end
-    end
-end
 
 local function updateUnits()
     if not fosterFrame.uiList then return end

@@ -2,10 +2,10 @@
 
 [![Fork of: zetone/enemyFrames](https://img.shields.io/badge/Fork%20of-zetone%2FenemyFrames-blue?logo=github)](https://github.com/zetone/enemyFrames)
 [![Interface: 11200](https://img.shields.io/badge/Interface-11200-blue.svg)](https://github.com/Fostercare5988/FosterFrames)
-[![ClassicAPI: Required](https://img.shields.io/badge/ClassicAPI-Required-brightgreen.svg)](https://github.com/balakethel/ClassicAPI)
-[![SuperWoW: 2.2+](https://img.shields.io/badge/SuperWoW-2.2+-orange.svg)](https://github.com/balakethel/SuperWoW)
-[![NamPower: 4.6.2+](https://img.shields.io/badge/NamPower-4.6.2+-purple.svg)](https://github.com/dustinlacewell/nampower)
-[![UnitXP: SP3](https://img.shields.io/badge/UnitXP-SP3-yellow.svg)](https://github.com/balakethel/UnitXP_SP3)
+[![ClassicAPI: v1.13.3+](https://img.shields.io/badge/ClassicAPI-v1.13.3+-brightgreen.svg)](https://github.com/brues-code/ClassicAPI)
+[![SuperWoW: 2.2+](https://img.shields.io/badge/SuperWoW-2.2+-orange.svg)](https://github.com/balakethelock/SuperWoW)
+[![NamPower: 4.6.2+](https://img.shields.io/badge/NamPower-4.6.2+-purple.svg)](https://github.com/Emyrk/nampower)
+[![UnitXP: SP3](https://img.shields.io/badge/UnitXP-SP3-yellow.svg)](https://codeberg.org/konaka/UnitXP_SP3)
 [![DXVK: Ready](https://img.shields.io/badge/DXVK-144Hz+-blueviolet.svg)](https://github.com/doitsujin/dxvk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -13,7 +13,7 @@
 
 ## 1. Overview & Problem Statement
 
-**FosterFrames** is an ultra-modern, high-performance tactical enemy unit frames suite for World of Warcraft 1.12.1 (Build 5875). It is a complete architectural rewrite and modernization of the classic **[enemyFrames](https://github.com/zetone/enemyFrames)** addon by **zetone**, built exclusively for the modern **Enhanced 1.12.1 Engine Stack** (**ClassicAPI**, **SuperWoW 2.2+**, **NamPower 4.6.2+**, **UnitXP SP3**, and **DXVK 144Hz+**).
+**FosterFrames** is an ultra-modern, high-performance tactical enemy unit frames suite for World of Warcraft 1.12.1 (Build 5875). It is a complete architectural rewrite and modernization of the classic **[enemyFrames](https://github.com/zetone/enemyFrames)** addon by **zetone**, built exclusively for the modern **Enhanced 1.12.1 Engine Stack** (**ClassicAPI v1.13.3+**, **SuperWoW 2.2+**, **NamPower 4.6.2+**, **UnitXP SP3**, and **DXVK 144Hz+**).
 
 ### The Legacy Problem (Vanilla 2006 Limitations)
 In 2006, the original World of Warcraft 1.12.1 client lacked native combat APIs for enemy casting, precise 3D distance, un-truncated health, and hardware mouseover casting. Legacy addons were forced to rely on:
@@ -24,21 +24,21 @@ In 2006, the original World of Warcraft 1.12.1 client lacked native combat APIs 
 - High runtime memory allocations that caused periodic GC pauses during intense 40v40 Alterac Valley teamfights.
 
 ### The Modern Solution
-FosterFrames completely eradicates all legacy workarounds, fallback code, and tooltip scrapers in favor of direct C++ engine integration and zero-GC memory reuse.
+FosterFrames completely eradicates all legacy workarounds, fallback code, and tooltip scrapers in favor of direct C++ engine integration, linear $O(n)$ slot-batching aura processing, and zero-GC memory reuse.
 
 ### Comparison Matrix: Legacy enemyFrames vs. Modern FosterFrames
 
 | Feature | Legacy enemyFrames (2006) | FosterFrames (Enhanced Engine) |
 |---|---|---|
-| **Casting Detection** | Text regex scraping on `CHAT_MSG_SPELL_*` | Native C++ `UnitCastingInfo` / `UnitChannelInfo` via SuperWoW & ClassicAPI |
-| **Aura & Buff Tracking** | Hidden tooltip text scanning | Native `C_UnitAuras.GetAuraDataByIndex` zero-GC queries |
+| **Casting Detection** | Text regex scraping on `CHAT_MSG_SPELL_*` | Native C++ `UnitCastingInfo` / `UnitChannelInfo` via SuperWoW & ClassicAPI (with same-spell re-channel reset) |
+| **Aura & Buff Tracking** | Hidden tooltip text scanning | Linear $O(n)$ slot-batching via `C_UnitAuras.GetAuraSlots` / `GetAuraDataBySlot` with zero-GC cache pools |
 | **Distance Telemetry** | Imprecise `CheckInteractDistance` fallback ladders | Exact 3D Euclidean distance via native `UnitXP("distance", unit)` |
 | **Health & Power Values** | Truncated percentages or guessed numbers | Real, uncapped numerical health & mana via `UnitXP("health", unit)` |
 | **Status Bar Smoothing** | Framerate-dependent linear interpolation | Framerate-independent $\Delta t$ exponential smoothing ($dt \cdot 15.0$) for 144Hz+ DXVK displays |
 | **Grid Sorting** | Dynamic distance sorting causing continuous frame jitter | Rock-solid deterministic sorting: Class Group -> Alphabetical Name (Zero Spasm) |
 | **Garbage Collection (GC)** | Constant table instantiations on frame ticks | Pre-allocated reusable buffers, in-place table mutations, and zero GC churn |
 | **Mouseover Spellcasting** | Hidden retargeting macros | Direct engine mouseover bindings via SuperWoW `SetMouseoverUnit` |
-| **Engine Dependencies** | None (pure 2006 vanilla workarounds) | Strictly requires `ClassicAPI.dll` and `SuperWoW.dll` |
+| **Engine Dependencies** | None (pure 2006 vanilla workarounds) | Strictly requires `ClassicAPI.dll` (v1.13.3+) and `SuperWoW.dll` (v2.2+) |
 
 ---
 
@@ -199,12 +199,12 @@ FosterFrames is engineered for zero garbage collection overhead and sustained 14
 ## 7. Installation & Engine Requirements
 
 ### Mandatory Dependencies
-1. **[ClassicAPI](https://github.com/balakethel/ClassicAPI)** (`ClassicAPI.dll`) - Provides modernized Lua 5.1 API rewriters, `hooksecurefunc`, `table.wipe`, and `C_UnitAuras` implementations.
-2. **[SuperWoW](https://github.com/balakethel/SuperWoW)** (`SuperWoW.dll` v2.2+) - C++ engine enhancements enabling `UnitGUID`, native `UnitCastingInfo` / `UnitChannelInfo`, and hardware targeting.
+1. **[ClassicAPI](https://github.com/brues-code/ClassicAPI)** (`ClassicAPI.dll` v1.13.3+) - Modernized Lua 5.1 API rewriters, linear $O(n)$ aura slot-batching (`GetAuraSlots`/`GetAuraDataBySlot`), same-spell re-channel engine, `hooksecurefunc`, `table.wipe`, and `INTERFACE_VERSION`.
+2. **[SuperWoW](https://github.com/balakethelock/SuperWoW)** (`SuperWoW.dll` v2.2+) - C++ engine enhancements enabling `UnitGUID`, native `UnitCastingInfo` / `UnitChannelInfo`, and hardware targeting.
 
 ### Recommended Extensions
-1. **[UnitXP SP3](https://github.com/balakethel/UnitXP_SP3)** (`UnitXP_SP3_Addon`) - Uncapped numerical player health and 3D Euclidean distance calculations.
-2. **[NamPower](https://github.com/dustinlacewell/nampower)** (v4.6.2+) - High-speed spell queue engine and network packet optimizations.
+1. **[UnitXP SP3](https://codeberg.org/konaka/UnitXP_SP3)** (`UnitXP_SP3_Addon`) - Uncapped numerical player health and 3D Euclidean distance calculations.
+2. **[NamPower](https://github.com/Emyrk/nampower)** (v4.6.2+) - High-speed spell queue engine and network packet optimizations.
 3. **[DXVK](https://github.com/doitsujin/dxvk)** - Direct3D 9 to Vulkan translation layer for stutter-free 144Hz+ refresh rates.
 
 ### Step-by-Step Installation
@@ -212,7 +212,7 @@ FosterFrames is engineered for zero garbage collection overhead and sustained 14
    ```text
    World of Warcraft\Interface\AddOns\FosterFrames\
    ```
-2. Verify that `ClassicAPI.dll` and `SuperWoW.dll` are placed in your root game directory alongside `WoW.exe`.
+2. Verify that `ClassicAPI.dll` (v1.13.3+) and `SuperWoW.dll` (v2.2+) are placed in your root game directory alongside `WoW.exe`.
 3. Launch the game, verify that **FosterFrames** is checked in the AddOns menu, and log in.
 
 ---
@@ -221,9 +221,10 @@ FosterFrames is engineered for zero garbage collection overhead and sustained 14
 
 - **Original Author & Concept:** **[zetone](https://github.com/zetone)** (Creator of the original [enemyFrames](https://github.com/zetone/enemyFrames) addon).
 - **Fork Maintainer & Lead Architect:** **[Fostercare5988](https://github.com/Fostercare5988)**.
-- **ClassicAPI Engine Extension:** **[Balakethel](https://github.com/balakethel)**.
-- **SuperWoW & UnitXP SP3 Architecture:** **[Balakethel](https://github.com/balakethel)** & contributors.
-- **NamPower Engine:** **[Dustin Lacewell (dustinlacewell)](https://github.com/dustinlacewell)**.
+- **ClassicAPI Engine Extension:** **[brues-code (Julius Brussee)](https://github.com/brues-code)**.
+- **SuperWoW Engine Extension:** **[Balakethel](https://github.com/balakethelock/SuperWoW)** & contributors.
+- **UnitXP SP3 Architecture:** **[konaka](https://codeberg.org/konaka/UnitXP_SP3)**.
+- **NamPower Engine:** **[Emyrk](https://github.com/Emyrk/nampower)**.
 - **Community Research:** Special thanks to the Turtle WoW and vanilla 1.12.1 modding community for ongoing reverse engineering and modern engine developments.
 
 ---

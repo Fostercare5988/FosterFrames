@@ -63,7 +63,45 @@ function SPELLCASTINGCOREgetBuffs(name, unit)
     table.wipe(auraListBuffer)
     local count = 0
 
-    if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
+    if C_UnitAuras and C_UnitAuras.GetAuraSlots and C_UnitAuras.GetAuraDataBySlot then
+        local helpfulSlots = C_UnitAuras.GetAuraSlots(unit, "HELPFUL")
+        if helpfulSlots then
+            local n = #helpfulSlots
+            for i = 1, n do
+                local aura = C_UnitAuras.GetAuraDataBySlot(unit, helpfulSlots[i])
+                if aura then
+                    count = count + 1
+                    local entry = getAuraEntry(count)
+                    entry.spell = aura.name
+                    entry.icon = aura.icon
+                    entry.stacks = aura.applications or 1
+                    entry.timeEnd = aura.expirationTime
+                    entry.duration = aura.duration
+                    entry.type = 'buff'
+                    auraListBuffer[count] = entry
+                end
+            end
+        end
+
+        local harmfulSlots = C_UnitAuras.GetAuraSlots(unit, "HARMFUL")
+        if harmfulSlots then
+            local n = #harmfulSlots
+            for i = 1, n do
+                local aura = C_UnitAuras.GetAuraDataBySlot(unit, harmfulSlots[i])
+                if aura then
+                    count = count + 1
+                    local entry = getAuraEntry(count)
+                    entry.spell = aura.name
+                    entry.icon = aura.icon
+                    entry.stacks = aura.applications or 1
+                    entry.timeEnd = aura.expirationTime
+                    entry.duration = aura.duration
+                    entry.type = aura.dispelName or 'none'
+                    auraListBuffer[count] = entry
+                end
+            end
+        end
+    elseif C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
         for i = 1, 40 do
             local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
             if not aura then break end
@@ -89,33 +127,6 @@ function SPELLCASTINGCOREgetBuffs(name, unit)
             entry.timeEnd = aura.expirationTime
             entry.duration = aura.duration
             entry.type = aura.dispelName or 'none'
-            auraListBuffer[count] = entry
-        end
-    else
-        for i = 1, 40 do
-            local tex, applications = UnitBuff(unit, i)
-            if not tex then break end
-            count = count + 1
-            local entry = getAuraEntry(count)
-            entry.spell = ""
-            entry.icon = tex
-            entry.stacks = applications or 1
-            entry.timeEnd = nil
-            entry.duration = nil
-            entry.type = 'buff'
-            auraListBuffer[count] = entry
-        end
-        for i = 1, 40 do
-            local tex, applications, debuffType = UnitDebuff(unit, i)
-            if not tex then break end
-            count = count + 1
-            local entry = getAuraEntry(count)
-            entry.spell = ""
-            entry.icon = tex
-            entry.stacks = applications or 1
-            entry.timeEnd = nil
-            entry.duration = nil
-            entry.type = debuffType or 'none'
             auraListBuffer[count] = entry
         end
     end

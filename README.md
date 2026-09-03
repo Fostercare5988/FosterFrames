@@ -6,14 +6,14 @@
 [![SuperWoW: 2.2+](https://img.shields.io/badge/SuperWoW-2.2+-orange.svg)](https://github.com/balakethelock/SuperWoW)
 [![NamPower: 4.6.2+](https://img.shields.io/badge/NamPower-4.6.2+-purple.svg)](https://github.com/Emyrk/nampower)
 [![UnitXP: SP3](https://img.shields.io/badge/UnitXP-SP3-yellow.svg)](https://codeberg.org/konaka/UnitXP_SP3)
-[![DXVK: Ready](https://img.shields.io/badge/DXVK-144Hz+-blueviolet.svg)](https://github.com/doitsujin/dxvk)
+[![DXVK: Vulkan](https://img.shields.io/badge/DXVK-Vulkan-blueviolet.svg)](https://github.com/doitsujin/dxvk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
 ## 1. Overview & Problem Statement
 
-**FosterFrames** is an ultra-modern, high-performance tactical enemy unit frames suite for World of Warcraft 1.12.1 (Build 5875). It is a complete architectural rewrite and modernization of the classic **[enemyFrames](https://github.com/zetone/enemyFrames)** addon by **zetone**, built exclusively for the modern **Enhanced 1.12.1 Engine Stack** (**ClassicAPI v1.13.3+**, **SuperWoW 2.2+**, **NamPower 4.6.2+**, **UnitXP SP3**, and **DXVK 144Hz+**).
+**FosterFrames** is an ultra-modern, high-performance tactical enemy unit frames suite for World of Warcraft 1.12.1 (Build 5875). It is a complete architectural rewrite and modernization of the classic **[enemyFrames](https://github.com/zetone/enemyFrames)** addon by **zetone**, built exclusively for the modern **Enhanced 1.12.1 Engine Stack** (**ClassicAPI v1.13.3+**, **SuperWoW 2.2+**, **NamPower 4.6.2+**, **UnitXP SP3**, and **DXVK**).
 
 ### The Legacy Problem (Vanilla 2006 Limitations)
 In 2006, the original World of Warcraft 1.12.1 client lacked native combat APIs for enemy casting, precise 3D distance, un-truncated health, and hardware mouseover casting. Legacy addons were forced to rely on:
@@ -34,7 +34,7 @@ FosterFrames completely eradicates all legacy workarounds, fallback code, and to
 | **Aura & Buff Tracking** | Hidden tooltip text scanning | Linear $O(n)$ slot-batching via `C_UnitAuras.GetAuraSlots` / `GetAuraDataBySlot` with zero-GC cache pools |
 | **Distance Telemetry** | Imprecise `CheckInteractDistance` fallback ladders | Exact 3D Euclidean distance via native `UnitXP("distance", unit)` |
 | **Health & Power Values** | Truncated percentages or guessed numbers | Real, uncapped numerical health & mana via `UnitXP("health", unit)` |
-| **Status Bar Smoothing** | Framerate-dependent linear interpolation | Framerate-independent $\Delta t$ exponential smoothing ($dt \cdot 15.0$) for 144Hz+ DXVK displays |
+| **Status Bar Smoothing** | Framerate-dependent linear interpolation | Framerate-independent $\Delta t$ exponential smoothing ($dt \cdot 15.0$) for DXVK displays |
 | **Grid Sorting** | Dynamic distance sorting causing continuous frame jitter | Rock-solid deterministic sorting: Class Group -> Alphabetical Name (Zero Spasm) |
 | **Garbage Collection (GC)** | Constant table instantiations on frame ticks | Pre-allocated reusable buffers, in-place table mutations, and zero GC churn |
 | **Mouseover Spellcasting** | Hidden retargeting macros | Direct engine mouseover bindings via SuperWoW `SetMouseoverUnit` |
@@ -48,7 +48,7 @@ FosterFrames enforces strict decoupling between data acquisition, tactical synch
 
 ```mermaid
 graph TD
-    Client[WoW 1.12.1 Client + DXVK 144Hz+] --> Engine[Enhanced Engine Layer]
+    Client[WoW 1.12.1 Client + DXVK] --> Engine[Enhanced Engine Layer]
     Engine --> CAPI[ClassicAPI.dll]
     Engine --> SW[SuperWoW.dll v2.2+]
     Engine --> UXP[UnitXP SP3]
@@ -179,14 +179,14 @@ FosterFrames provides dedicated tactical keybindings accessible via the standard
 
 ## 6. Performance Profile & Benchmarks
 
-FosterFrames is engineered for zero garbage collection overhead and sustained 144Hz+ framerates during intensive 40v40 PvP encounters.
+FosterFrames is engineered for zero garbage collection overhead and sustained framerates during intensive 40v40 PvP encounters.
 
 | Metric | Legacy enemyFrames | FosterFrames Engine Stack | Improvement |
 |---|---|---|---|
 | **Garbage Collection (GC) Churn** | ~140 KB / sec in 40v40 AV | **0 KB / sec (Zero GC Churn)** | 100% Allocation Elimination |
 | **Sorting Pipeline Overhead** | Unstable bubble sort (~1.8 ms) | Pre-allocated buffer QuickSort (<0.08 ms) | **22x Faster Execution** |
 | **Distance Computation** | Tooltip & interact ladders | Native C++ Euclidean `UnitXP` (<0.02 ms) | **Instant Hardware Telemetry** |
-| **Framerate Overhead** | Framerate-dependent linear step | $\Delta t$ exponential smoothing ($dt \cdot 15.0$) | **Silky Smooth 144Hz+ DXVK** |
+| **Framerate Overhead** | Framerate-dependent linear step | $\Delta t$ exponential smoothing ($dt \cdot 15.0$) | **Silky Smooth DXVK** |
 | **Codebase Redundancy** | 3 duplicate visual renderers | 1 unified parameterized updater | **-200+ Duplicate Lines** |
 
 ### Memory & Allocation Strategy
@@ -205,7 +205,7 @@ FosterFrames is engineered for zero garbage collection overhead and sustained 14
 ### Recommended Extensions
 1. **[UnitXP SP3](https://codeberg.org/konaka/UnitXP_SP3)** (`UnitXP_SP3_Addon`) - Uncapped numerical player health and 3D Euclidean distance calculations.
 2. **[NamPower](https://github.com/Emyrk/nampower)** (v4.6.2+) - High-speed spell queue engine and network packet optimizations.
-3. **[DXVK](https://github.com/doitsujin/dxvk)** - Direct3D 9 to Vulkan translation layer for stutter-free 144Hz+ refresh rates.
+3. **[DXVK](https://github.com/doitsujin/dxvk)** - Direct3D 9 to Vulkan translation layer for stutter-free frame pacing.
 
 ### Step-by-Step Installation
 1. Download or clone this repository into your World of Warcraft directory:

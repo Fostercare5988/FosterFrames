@@ -1,5 +1,5 @@
 -- FosterFrames - SmoothBar Engine
--- Enhanced 1.12.1 Engine Stack (High-Refresh Rate & DXVK 144Hz+ Smoothing)
+-- Enhanced 1.12.1 Engine Stack (High-Refresh Rate & DXVK Frame Pacing Smoothing)
 
 local smoothing = {}
 local min, max, abs = math.min, math.max, math.abs
@@ -31,7 +31,7 @@ f:SetScript('OnUpdate', function()
             bar:SetValue_(target)
             smoothing[bar] = nil
         else
-            -- Delta-time exponential smoothing (144Hz/240Hz+ smooth)
+            -- Delta-time exponential smoothing (fluid frame pacing)
             local rate = min(1.0, dt * 15.0)
             local new = cur + (diff * rate)
             bar:SetValue_(new)

@@ -138,7 +138,7 @@ local function updatePlayerData(p, class, h, mh, mana, maxmana, powerType, guid,
     if mh then p.maxhealth = mh end
     if mana then p.mana = mana end
     if maxmana then p.maxmana = maxmana end
-    if guid then p.guid = guid end
+    if guid and type(guid) == "string" and guid:sub(1, 2) == "0x" then p.guid = guid end
     if class then p.class = class end
 
     if powerType then
@@ -162,7 +162,7 @@ local function applyNearbyPlayer(v, now, nextCheck)
     end
 
     -- If another entry exists with the exact same GUID, remove it
-    if v.guid and v.guid ~= "" then
+    if v.guid and type(v.guid) == "string" and v.guid:sub(1, 2) == "0x" then
         for oldId, oldPlayer in pairs(playerList) do
             if oldId ~= id and oldPlayer.guid == v.guid then
                 playerList[oldId] = nil
@@ -175,7 +175,7 @@ local function applyNearbyPlayer(v, now, nextCheck)
         p = {
             name      = id,
             class     = v.class or 'WARRIOR',
-            guid      = v.guid or id,
+            guid      = (v.guid and type(v.guid) == "string" and v.guid:sub(1, 2) == "0x") and v.guid or nil,
             nearby    = true,
             maxhealth = v.maxhealth or 100,
         }
@@ -207,7 +207,10 @@ local function verifyUnitInfo(unit, now)
         local h, mh = getExactHealth(unit)
         local power = UnitPowerType(unit)
         local powerType = (power == 3 and 'energy') or (power == 1 and 'rage') or 'mana'
-        local guid = UnitGUID(unit) or name
+        local guid = UnitGUID(unit)
+        if not (guid and type(guid) == "string" and guid:sub(1, 2) == "0x") then
+            guid = nil
+        end
         local nextCheck = now + nextPlayerCheck
 
         local p = playerList[name]
@@ -246,7 +249,10 @@ local function broadcastSpottedEnemy(name, class, guid)
 end
 
 local function processCombatUnit(guid, name, flags, now, nextCheck)
-    if not guid or guid == "" or not name or name == "" or name:sub(1, 7) == "Unknown" then return end
+    if not name or name == "" or name:sub(1, 7) == "Unknown" then return end
+    if not (guid and type(guid) == "string" and guid:sub(1, 2) == "0x") then
+        guid = nil
+    end
     local isEnemy = bit.band(flags or 0, 64) ~= 0
 
     local isPlayer = bit.band(flags or 0, 1024) ~= 0
@@ -270,7 +276,7 @@ local function processCombatUnit(guid, name, flags, now, nextCheck)
             end
             broadcastSpottedEnemy(name, nil, guid)
         else
-            p.guid = guid
+            if guid then p.guid = guid end
             p.nearby = true
             p.nextCheck = nextCheck
         end
@@ -375,10 +381,17 @@ local function updatePlayerListInfo(now)
     local nextCheck = now + nextPlayerCheck
 
     for k, v in pairs(playerList) do
-        local unitID = (UnitExists('target') and v.guid == UnitGUID('target') and 'target')
-            or (UnitExists('mouseover') and v.guid == UnitGUID('mouseover') and 'mouseover')
+        local unitID = (UnitExists('target') and ((v.guid and v.guid == UnitGUID('target')) or UnitName('target') == v.name) and 'target')
+            or (UnitExists('mouseover') and ((v.guid and v.guid == UnitGUID('mouseover')) or UnitName('mouseover') == v.name) and 'mouseover')
             or cachedRaidTargets[v.name]
             or nil
+
+        if unitID and UnitExists(unitID) then
+            local realGuid = UnitGUID(unitID)
+            if realGuid and type(realGuid) == "string" and realGuid:sub(1, 2) == "0x" then
+                v.guid = realGuid
+            end
+        end
 
         -- Exact distance query via unitID, name, or guid (UnitXP SP3)
         local dist = (unitID and getExactDistance(unitID)) or getExactDistance(v.name) or (v.guid and getExactDistance(v.guid))
@@ -514,8 +527,10 @@ local function resetTargetCount()
 end
 
 local function getPlayerGUIDByName(name)
-    for guid, p in pairs(playerList) do
-        if p.name == name then return guid end
+    for _, p in pairs(playerList) do
+        if p.name == name and p.guid and type(p.guid) == "string" and p.guid:sub(1, 2) == "0x" then
+            return p.guid
+        end
     end
     return nil
 end
@@ -544,7 +559,7 @@ end
 function FOSTERFRAMECOREAddSpottedUnit(u)
     if not (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['openWorldScanning']) then return end
     if not u or not u.name or u.name == "" or u.name:sub(1, 7) == "Unknown" then return end
-    local id = u.guid or u.name
+    local id = u.name
 
     local isNew = (playerList[id] == nil)
 
@@ -729,7 +744,7 @@ local function eventHandler()
                     playerList[name] = {
                         name      = name,
                         class     = string.upper(classToken or class or 'WARRIOR'),
-                        guid      = name,
+                        guid      = nil,
                         nearby    = false,
                         health    = nil,
                         maxhealth = 100,

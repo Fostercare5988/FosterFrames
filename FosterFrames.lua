@@ -198,8 +198,8 @@ for i = 1, unitLimit do
             frame.mo = true
             MOUSEOVERUNINAME = frame.tar
         end
-        if SetMouseoverUnit and frame.guid then
-            SetMouseoverUnit(frame.guid)
+        if SetMouseoverUnit and frame.guid and type(frame.guid) == "string" and frame.guid:sub(1, 2) == "0x" and not frame.guid:find("TEST") then
+            pcall(SetMouseoverUnit, frame.guid)
         end
     end)
 
@@ -214,7 +214,7 @@ for i = 1, unitLimit do
         frame.mo = false
         MOUSEOVERUNINAME = nil
         if SetMouseoverUnit then
-            SetMouseoverUnit(nil)
+            pcall(SetMouseoverUnit)
         end
     end)
 end

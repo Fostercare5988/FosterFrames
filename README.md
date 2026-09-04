@@ -4,7 +4,7 @@
 [![Interface: 11200](https://img.shields.io/badge/Interface-11200-blue.svg)](https://github.com/Fostercare5988/FosterFrames)
 [![ClassicAPI: v1.13.3+](https://img.shields.io/badge/ClassicAPI-v1.13.3+-brightgreen.svg)](https://github.com/brues-code/ClassicAPI)
 [![SuperWoW: 2.2+](https://img.shields.io/badge/SuperWoW-2.2+-orange.svg)](https://github.com/balakethelock/SuperWoW)
-[![NamPower: 4.6.2+](https://img.shields.io/badge/NamPower-4.6.2+-purple.svg)](https://github.com/Emyrk/nampower)
+[![NamPower: 4.6.3+](https://img.shields.io/badge/NamPower-4.6.3+-purple.svg)](https://github.com/Emyrk/nampower)
 [![UnitXP: SP3](https://img.shields.io/badge/UnitXP-SP3-yellow.svg)](https://codeberg.org/konaka/UnitXP_SP3)
 [![DXVK: Vulkan](https://img.shields.io/badge/DXVK-Vulkan-blueviolet.svg)](https://github.com/doitsujin/dxvk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -13,7 +13,7 @@
 
 ## 1. Overview & Problem Statement
 
-**FosterFrames** is an ultra-modern, high-performance tactical enemy unit frames suite for World of Warcraft 1.12.1 (Build 5875). It is a complete architectural rewrite and modernization of the classic **[enemyFrames](https://github.com/zetone/enemyFrames)** addon by **zetone**, built exclusively for the modern **Enhanced 1.12.1 Engine Stack** (**ClassicAPI v1.13.3+**, **SuperWoW 2.2+**, **NamPower 4.6.2+**, **UnitXP SP3**, and **DXVK**).
+**FosterFrames** is an ultra-modern, high-performance tactical enemy unit frames suite for World of Warcraft 1.12.1 (Build 5875). It is a complete architectural rewrite and modernization of the classic **[enemyFrames](https://github.com/zetone/enemyFrames)** addon by **zetone**, built exclusively for the modern **Enhanced 1.12.1 Engine Stack** (**ClassicAPI v1.13.3+**, **SuperWoW 2.2+**, **NamPower 4.6.3+**, **UnitXP SP3**, and **DXVK**).
 
 ### The Legacy Problem (Vanilla 2006 Limitations)
 In 2006, the original World of Warcraft 1.12.1 client lacked native combat APIs for enemy casting, precise 3D distance, un-truncated health, and hardware mouseover casting. Legacy addons were forced to rely on:
@@ -52,7 +52,7 @@ graph TD
     Engine --> CAPI[ClassicAPI.dll]
     Engine --> SW[SuperWoW.dll v2.2+]
     Engine --> UXP[UnitXP SP3]
-    Engine --> NP[NamPower v4.6.2+]
+    Engine --> NP[NamPower v4.6.3+]
 
     CAPI --> Core[FosterFramesCore: Telemetry & State Engine]
     SW --> Core
@@ -204,7 +204,7 @@ FosterFrames is engineered for zero garbage collection overhead and sustained fr
 
 ### Recommended Extensions
 1. **[UnitXP SP3](https://codeberg.org/konaka/UnitXP_SP3)** (`UnitXP_SP3_Addon`) - Uncapped numerical player health and 3D Euclidean distance calculations.
-2. **[NamPower](https://github.com/Emyrk/nampower)** (v4.6.2+) - High-speed spell queue engine and network packet optimizations.
+2. **[NamPower](https://github.com/Emyrk/nampower)** (v4.6.3+) - High-speed spell queue engine and network packet optimizations.
 3. **[DXVK](https://github.com/doitsujin/dxvk)** - Direct3D 9 to Vulkan translation layer for stutter-free frame pacing.
 
 ### Step-by-Step Installation

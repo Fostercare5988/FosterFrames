@@ -31,8 +31,6 @@ if FOSTERFRAMESPLAYERDATA == nil then
         ['avUnitHeight']                 = 16,
         ['avShowMana']                   = false,
         ['smartDistanceSorting']         = false,
-        ['efcBGannouncement']            = true,
-        ['efcDistanceTracking']          = true,
 
         -- Spy & Open World Radar
         ['openWorldScanning']            = true,
@@ -119,18 +117,6 @@ local TABS_CONFIG = {
                 label = 'AV: Show Only Nearby / Active Combatants',
                 tooltipTitle = 'AV Active Enemy Filter',
                 tooltipText = 'In Alterac Valley, automatically hides far-away hostiles, showing only enemies that are nearby or engaged in active combat around you.'
-            },
-            {
-                id = 'efcDistanceTracking',
-                label = 'Track 3D Yard Distance to Flag Carrier (WSG)',
-                tooltipTitle = 'EFC Distance Telemetry',
-                tooltipText = 'Calculates live 3D yard distance to the Enemy Flag Carrier in Warsong Gulch and updates targeting telemetry.'
-            },
-            {
-                id = 'efcBGannouncement',
-                label = 'Alert /bg Chat on EFC Low Health (<40%, <20%, <10%)',
-                tooltipTitle = 'EFC Low Health Announcement',
-                tooltipText = 'Automatically broadcasts an alert to the /battleground chat channel when the Enemy Flag Carrier\'s health drops below 40%, 20%, or 10% in Warsong Gulch.'
             },
             {
                 id = 'smartDistanceSorting',

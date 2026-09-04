@@ -1,11 +1,10 @@
--- FosterFrames - TargetFrame Extensions (Castbar, Flag Carrier Indicator, Debuff Timers)
+-- FosterFrames - TargetFrame Extensions (Castbars & Debuff Timers)
 -- Enhanced 1.12.1 Engine Stack (ClassicAPI, SuperWoW, UnitXP SP3)
 
 if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) then return end
 
 local refreshInterval = 1 / 60
 local nextRefresh = 0
-local flagCarriers = {}
 local castbarmoveable = false
 
 local TEXTURE = [[Interface\AddOns\FosterFrames\globals\resources\barTexture.tga]]
@@ -175,59 +174,6 @@ local function showCast()
     end
 end
 
-function TARGETFRAMEsetFC(fc)
-    flagCarriers = fc or {}
-end
-
--- Target Portrait Flag Carrier / Debuff Overlay
-local portraitDebuff = CreateFrame('Frame', 'TargetPortraitDebuff', TargetFrame)
-portraitDebuff:SetFrameLevel(0)
-portraitDebuff:SetPoint('TOPLEFT', TargetPortrait, 'TOPLEFT', 7, -2)
-portraitDebuff:SetPoint('BOTTOMRIGHT', TargetPortrait, 'BOTTOMRIGHT', -5.5, 4)
-
-portraitDebuff.bgText = TargetFrame:CreateTexture(nil, 'OVERLAY')
-portraitDebuff.bgText:SetPoint('TOPLEFT', TargetPortrait, 'TOPLEFT', 3, -4.5)
-portraitDebuff.bgText:SetPoint('BOTTOMRIGHT', TargetPortrait, 'BOTTOMRIGHT', -4, 3)
-portraitDebuff.bgText:SetVertexColor(0.3, 0.3, 0.3)
-portraitDebuff.bgText:SetTexture([[Interface\AddOns\FosterFrames\globals\resources\portraitBg.tga]])
-
-portraitDebuff.debuffText = TargetFrame:CreateTexture()
-portraitDebuff.debuffText:SetPoint('TOPLEFT', TargetPortrait, 'TOPLEFT', 7.5, -8)
-portraitDebuff.debuffText:SetPoint('BOTTOMRIGHT', TargetPortrait, 'BOTTOMRIGHT', -7.5, 4.5)
-portraitDebuff.debuffText:SetTexCoord(0.12, 0.88, 0.12, 0.88)
-
-local portraitDurationFrame = CreateFrame('Frame', nil, TargetFrame)
-portraitDurationFrame:SetAllPoints()
-portraitDurationFrame:SetFrameLevel(2)
-
-portraitDebuff.duration = portraitDurationFrame:CreateFontString(nil, 'OVERLAY')
-portraitDebuff.duration:SetFont(STANDARD_TEXT_FONT, 16, 'OUTLINE')
-portraitDebuff.duration:SetTextColor(0.9, 0.9, 0.2, 1)
-portraitDebuff.duration:SetShadowOffset(1, -1)
-portraitDebuff.duration:SetShadowColor(0, 0, 0)
-portraitDebuff.duration:SetPoint('CENTER', TargetPortrait, 'CENTER', 0, -5)
-
-portraitDebuff.cd = CreateCooldown(portraitDebuff, 1.054, true)
-portraitDebuff.cd:SetAlpha(1)
-
-local function showPortraitDebuff()
-    if UnitExists('target') then
-        local targetFaction = (UnitFactionGroup('target') == 'Alliance') and 'Horde' or 'Alliance'
-        if UnitName('target') == flagCarriers[targetFaction] then
-            portraitDebuff.debuffText:SetTexture(SPELLINFO_WSG_FLAGS[targetFaction]['icon'])
-            portraitDebuff.bgText:Show()
-            portraitDebuff.duration:SetText('')
-            portraitDebuff.cd:Hide()
-            portraitDebuff.bgText:SetVertexColor(0.1, 0.1, 0.1)
-        else
-            portraitDebuff.cd:Hide()
-            portraitDebuff.debuffText:SetTexture()
-            portraitDebuff.duration:SetText('')
-            portraitDebuff.bgText:Hide()
-        end
-    end
-end
-
 -- Buff / Debuff Overlay Initializer
 local function addExtras(button)
     if not button or button.ft then return end
@@ -314,7 +260,6 @@ dummyFrame:SetScript('OnUpdate', function()
             TargetFrameNameBackground:SetAlpha(1)
             TargetName:Show()
         end
-        showPortraitDebuff()
 
         if UnitExists('target') then
             displayTimers(SPELLCASTINGCOREgetBuffs(UnitName('target'), 'target'))
@@ -327,9 +272,3 @@ end)
 function TARGETFRAMECASTBARsettings(b)
     castbarmoveable = b
 end
-
-dummyFrame:RegisterEvent('PLAYER_ENTERING_WORLD')
-dummyFrame:RegisterEvent('ZONE_CHANGED_NEW_AREA')
-dummyFrame:SetScript('OnEvent', function()
-    table.wipe(flagCarriers)
-end)

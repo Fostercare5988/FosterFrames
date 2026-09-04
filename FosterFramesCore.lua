@@ -37,7 +37,6 @@ end
 local playerList = {}
 local prioMembers = {}
 local cachedRaidTargets = {}
-local currentFlagCarriers = {}
 local trinketTimers = {}
 local activeCC = nil
 
@@ -231,10 +230,6 @@ local function verifyUnitInfo(unit, now)
 
         updatePlayerData(p, class, h, mh, UnitMana(unit), UnitManaMax(unit), powerType, guid, now, nextCheck)
         updateUnitDistance(p, unit)
-
-        if p.fc and WSGUIupdateFChealth then
-            WSGUIupdateFChealth(unit)
-        end
         return true
     end
     return false
@@ -427,57 +422,6 @@ local function updatePlayerListInfo(now)
     end
 end
 
-local function calculateEFCDistance(now)
-    if not (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['efcDistanceTracking']) then return end
-
-    local enemyFaction = (playerFaction == 'Alliance') and 'Horde' or 'Alliance'
-    local efcName = currentFlagCarriers[enemyFaction]
-    if not efcName or efcName == " " then return end
-
-    local efcUnit = nil
-    if UnitExists('target') and UnitName('target') == efcName then
-        efcUnit = 'target'
-    elseif UnitExists('mouseover') and UnitName('mouseover') == efcName then
-        efcUnit = 'mouseover'
-    else
-        for i = 1, 40 do
-            local rTarget = RAID_TARGET_UNITS[i]
-            if UnitExists(rTarget) and UnitName(rTarget) == efcName then
-                efcUnit = rTarget
-                break
-            end
-        end
-    end
-
-    if efcUnit then
-        local dist = getExactDistance(efcUnit)
-        local distanceStr = dist and ("< " .. dist .. "yd") or "unknown"
-        if playerList[efcName] then
-            playerList[efcName].efcDistance = distanceStr
-            playerList[efcName].distance = dist or playerList[efcName].distance
-        end
-    else
-        if GetPlayerMapPosition and GetNumBattlefieldFlagPositions then
-            local px, py = GetPlayerMapPosition("player")
-            if px and py and (px > 0 or py > 0) then
-                local num = GetNumBattlefieldFlagPositions() or 0
-                for i = 1, num do
-                    local fx, fy, token = GetBattlefieldFlagPosition(i)
-                    if fx and fy and (fx > 0 or fy > 0) and (not token or string.find(string.lower(token), string.lower(enemyFaction))) then
-                        local dx, dy = (px - fx) * 515, (py - fy) * 685
-                        local dist = math.floor(math.sqrt(dx * dx + dy * dy) + 0.5)
-                        if playerList[efcName] then
-                            playerList[efcName].efcDistance = "< " .. dist .. "yd"
-                            playerList[efcName].distance = dist
-                        end
-                        break
-                    end
-                end
-            end
-        end
-    end
-end
-
 local function globalNearbyMaintenance(now)
     now = now or GetTime()
     local nextSeen = now + playerOutdoorLastseen
@@ -564,17 +508,6 @@ function FOSTERFRAMECOREgetPlayerList()
     return playerList
 end
 
-function FOSTERFRAMECOREGetEFCDistance()
-    local enemyFaction = (playerFaction == 'Alliance') and 'Horde' or 'Alliance'
-    local efcName = currentFlagCarriers[enemyFaction]
-    if not efcName or efcName == " " then return nil end
-
-    if playerList[efcName] and playerList[efcName].efcDistance then
-        return efcName, playerList[efcName].efcDistance
-    end
-    return efcName, 'unknown'
-end
-
 function FOSTERFRAMECOREAddSpottedUnit(u)
     if not (FOSTERFRAMESPLAYERDATA and FOSTERFRAMESPLAYERDATA['openWorldScanning']) then return end
     if not u or not u.name or u.name == "" or u.name:sub(1, 7) == "Unknown" then return end
@@ -589,25 +522,6 @@ function FOSTERFRAMECOREAddSpottedUnit(u)
     if isNew and p and p.class then
         broadcastSpottedEnemy(p.name, p.class, p.guid)
     end
-end
-
-
-function FOSTERFRAMECOREUpdateFlagCarriers(fc)
-    currentFlagCarriers = fc or {}
-    for _, v in pairs(playerList) do
-        local oldFC = v.fc
-        if not fc[playerFaction] then
-            v.fc = false
-        else
-            v.fc = (v.name == fc[playerFaction])
-        end
-        v.refresh = (oldFC ~= v.fc)
-    end
-
-    refreshUnits = true
-    if TARGETFRAMEsetFC then TARGETFRAMEsetFC(fc) end
-    if WSGUIupdateFC then WSGUIupdateFC(fc) end
-    if WSGHANDLERsetFlagCarriers then WSGHANDLERsetFlagCarriers(fc) end
 end
 
 function FOSTERFRAMECORESetPlayersData(list)
@@ -648,10 +562,6 @@ local function fosterFramesCoreOnUpdate()
     end
 
     updatePlayerListInfo(now)
-
-    if insideBG and currentZone == 'Warsong Gulch' then
-        calculateEFCDistance(now)
-    end
 
     if now > globalNearbyCheckNext then
         globalNearbyMaintenance(now)
@@ -704,7 +614,6 @@ local function initializeValues()
     f:SetScript('OnUpdate', fosterFramesCoreOnUpdate)
     FOSTERFRAMESInitialize(maxUnitsDisplayed, insideBG)
     if bindingsInit then bindingsInit() end
-    if WSGUIinit then WSGUIinit(insideBG) end
 
     refreshUnits = true
 end
@@ -780,7 +689,6 @@ local function eventHandler()
             end
         end
     elseif evt == 'UNIT_HEALTH' or evt == 'UNIT_PVP_UPDATE' then
-        if WSGUIupdateFChealth then WSGUIupdateFChealth(arg1) end
         verifyUnitInfo(arg1, now)
     end
 end

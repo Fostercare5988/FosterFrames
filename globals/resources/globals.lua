@@ -119,11 +119,3 @@ function GET_DEFAULT_ICON(op, value)
     if not value or not dir then return "" end
     return dir .. value
 end
-
-
-if not SPELLINFO_WSG_FLAGS then
-    SPELLINFO_WSG_FLAGS = {
-        ['Alliance'] = { ['icon'] = [[Interface\Icons\inv_bannervp_02]] },
-        ['Horde']    = { ['icon'] = [[Interface\Icons\inv_bannerpvp_01]] },
-    }
-end

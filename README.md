@@ -60,7 +60,6 @@ graph TD
 
     Core --> VSuite[FosterFrames.lua: Unified Visual Pipeline]
     Core --> TargetHUD[targetframe.lua: TargetFrame & Nameplate HUD]
-    Core --> BGHud[wsgUI.lua & abHandler.lua: Objective HUDs]
 
     VSuite --> Smooth[smoothBar.lua: Delta-Time Interpolator]
     VSuite --> CDModels[customCooldown.lua: 3D Cooldown Spirals]
@@ -71,7 +70,7 @@ graph TD
 - **`FosterFrames.lua`**: Visual frame compositor. Unified `UpdateCardVisuals` pipeline handling responsive 5/10-column layouts, target border highlights, and single-state castbar isolation.
 - **`globals/spellCastingCore.lua`**: Native C++ cast query hub. Accurately maps ClassicAPI return signatures (`UnitCastingInfo`, `UnitChannelInfo`) and `C_UnitAuras` data into reusable zero-GC cache pools.
 - **`globals/smoothBar.lua`**: Mathematical delta-time exponential smoothing engine ensuring fluid animations on 144Hz, 165Hz, and 240Hz monitors.
-- **`UIElements/targetframe.lua`**: Dual target castbars (standalone movable bar + integrated nameplate bar) and portrait flag indicator.
+- **`UIElements/targetframe.lua`**: Dual target castbars (standalone movable bar + integrated nameplate bar) and debuff timers.
 - **`UIElements/BindingsHandler.lua`**: Tactical raid marker keybinding dispatcher (`setIconBind`).
 - **`globals/settings/settings.lua`**: Data-driven, 4-tab graphical configuration interface with $O(1)$ dispatch table slash commands.
 
@@ -100,10 +99,9 @@ graph TD
 - **Stealth Action Watcher:** Triggers instant chat and audio raid warning alarms when hostile Rogues or Druids activate `Stealth`, `Prowl`, `Vanish`, or `Shadowmeld`.
 - **Audio & Taskbar Alerts:** Plays audible proximity alerts and flashes the Windows taskbar via UnitXP SP3 (`FlashClientIcon`) when an enemy is spotted while the game is minimized.
 
-### 4. Objective & Battleground Intelligence
-- **Warsong Gulch EFC Assistant:** Tracks enemy flag carriers with live yard distance, clickable targeting macro button, and automated low-health raid warnings (`/bg`).
-- **Arathi Basin Assault Radar:** Detects and broadcasts base capture attempts with spam-throttled notifications.
+### 4. Battleground Roster Integration
 - **Alterac Valley Compact Grid:** Dedicated 10-row compact layout option with customized dimensions for large 40-man battlefields.
+- **Zero Objective Redundancy:** Focuses strictly on tactical unit cards, castbars, and telemetry. All Warsong flag tracking and objective timers are cleanly delegated to AutoBG.
 
 ---
 
@@ -123,8 +121,7 @@ Access the configuration interface in-game by typing `/ff`, `/ffs`, or clicking 
 2. **Battlegrounds Suite:**
    - Alterac Valley Compact Mode (10-row column layout).
    - AV Compact Width and Height sliders.
-   - Warsong Gulch Flag Carrier Announcements & Health Alerts.
-   - Real-time EFC Distance Estimation.
+   - Distance-based sorting toggle.
 3. **Spy & World PvP:**
    - Open World Hostile Radar.
    - Proximity Audio Warning Alarms.

@@ -11,8 +11,6 @@
 globals\resources\globals.lua
 globals\smoothBar.lua
 globals\actionHandler.lua
-globals\wsgHandler.lua
-globals\abHandler.lua
 globals\commHandler.lua
 
 # UI TEMPLATES & ELEMENTS
@@ -29,8 +27,6 @@ FosterFramesCore.lua
 FosterFrames.lua
 
 # UI OVERLAYS & HANDLERS
-UIElements\scoreBoard.lua
-UIElements\wsgUI.lua
 UIElements\BindingsHandler.lua
 UIElements\targetframe.lua
 

@@ -4,7 +4,6 @@
 if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) then return end
 
 local msgPrefix = {
-    ['EFC']  = 'BGEFEFC',
     ['SCAN'] = 'BGEFSCN',
 }
 
@@ -13,11 +12,6 @@ local spottedUnitBuffer = {
     class  = nil,
     guid   = nil,
     nearby = true,
-}
-
-local efcBuffer = {
-    Alliance = nil,
-    Horde    = nil,
 }
 
 function sendMSG(typ, d, icon, bg)
@@ -40,17 +34,6 @@ local function handleScan(message)
     end
 end
 
-local function handleEFC(message)
-    local sender, allianceEFC, hordeEFC = message:match("([^/]+)/([^/]+)/([^/]+)")
-    if sender and sender ~= UnitName('player') then
-        if allianceEFC and string.lower(allianceEFC) == "flag" then allianceEFC = ' ' end
-        if hordeEFC and string.lower(hordeEFC) == "flag" then hordeEFC = ' ' end
-        efcBuffer.Alliance = (allianceEFC ~= ' ' and allianceEFC) or nil
-        efcBuffer.Horde    = (hordeEFC ~= ' ' and hordeEFC) or nil
-        FOSTERFRAMECOREUpdateFlagCarriers(efcBuffer)
-    end
-end
-
 local f = CreateFrame('Frame')
 f:RegisterEvent('CHAT_MSG_ADDON')
 f:SetScript('OnEvent', function()
@@ -58,9 +41,7 @@ f:SetScript('OnEvent', function()
     local message = arg2
     if not prefix or not message then return end
 
-    if prefix == msgPrefix['EFC'] then
-        handleEFC(message)
-    elseif prefix == msgPrefix['SCAN'] then
+    if prefix == msgPrefix['SCAN'] then
         handleScan(message)
     end
 end)

@@ -456,6 +456,25 @@ local function calculateEFCDistance(now)
             playerList[efcName].efcDistance = distanceStr
             playerList[efcName].distance = dist or playerList[efcName].distance
         end
+    else
+        if GetPlayerMapPosition and GetNumBattlefieldFlagPositions then
+            local px, py = GetPlayerMapPosition("player")
+            if px and py and (px > 0 or py > 0) then
+                local num = GetNumBattlefieldFlagPositions() or 0
+                for i = 1, num do
+                    local fx, fy, token = GetBattlefieldFlagPosition(i)
+                    if fx and fy and (fx > 0 or fy > 0) and (not token or string.find(string.lower(token), string.lower(enemyFaction))) then
+                        local dx, dy = (px - fx) * 515, (py - fy) * 685
+                        local dist = math.floor(math.sqrt(dx * dx + dy * dy) + 0.5)
+                        if playerList[efcName] then
+                            playerList[efcName].efcDistance = "< " .. dist .. "yd"
+                            playerList[efcName].distance = dist
+                        end
+                        break
+                    end
+                end
+            end
+        end
     end
 end
 

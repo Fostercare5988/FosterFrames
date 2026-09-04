@@ -10,21 +10,28 @@ end
 local function handleChatMessage(msg)
     if not msg then return end
     
-    local flag, carrier = msg:match("The (%a+) (%a+) was picked up by (%a+)!")
+    local _, _, flag, carrier = string.find(msg, "The (%a+) [Ff]lag was picked up by ([^!%.]+)")
     if flag and carrier then
         flagCarriers[flag] = carrier
         FOSTERFRAMECOREUpdateFlagCarriers(flagCarriers)
         return
     end
 
-    local droppedFlag = msg:match("The (%a+) (%a+) was dropped")
+    local _, _, droppedFlag = string.find(msg, "The (%a+) [Ff]lag was dropped")
     if droppedFlag then
         flagCarriers[droppedFlag] = nil
         FOSTERFRAMECOREUpdateFlagCarriers(flagCarriers)
         return
     end
 
-    if msg:find("captured the") then
+    local _, _, returnedFlag = string.find(msg, "The (%a+) [Ff]lag was returned")
+    if returnedFlag then
+        flagCarriers[returnedFlag] = nil
+        FOSTERFRAMECOREUpdateFlagCarriers(flagCarriers)
+        return
+    end
+
+    if string.find(msg, "captured the") or string.find(msg, "flags are now placed at their bases") then
         table.wipe(flagCarriers)
         FOSTERFRAMECOREUpdateFlagCarriers(flagCarriers)
         return

@@ -43,6 +43,8 @@ end
 local function handleEFC(message)
     local sender, allianceEFC, hordeEFC = message:match("([^/]+)/([^/]+)/([^/]+)")
     if sender and sender ~= UnitName('player') then
+        if allianceEFC and string.lower(allianceEFC) == "flag" then allianceEFC = ' ' end
+        if hordeEFC and string.lower(hordeEFC) == "flag" then hordeEFC = ' ' end
         efcBuffer.Alliance = (allianceEFC ~= ' ' and allianceEFC) or nil
         efcBuffer.Horde    = (hordeEFC ~= ' ' and hordeEFC) or nil
         FOSTERFRAMECOREUpdateFlagCarriers(efcBuffer)
